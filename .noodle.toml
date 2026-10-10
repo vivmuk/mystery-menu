@@ -1,14 +1,19 @@
 mode = "auto"
 
-# Noodle is the backlog and scheduler of record: todos.md, the skills, the order
-# schema. The loop itself is PARKED — Noodle can only drive the Claude and Codex
-# CLIs, Claude Code cannot talk to Venice at all, and Codex is not wanted in this
-# project. Execution runs instead through Hermes subagents pinned to Venice models
-# (delegation.provider=custom, delegation.model=kimi-k3). Do not run `noodle start`
-# until a cook of your own choice is wired up.
+# Execution: Codex CLI pointed at Venice. Noodle drives the `codex` binary, and
+# agents.codex.path is a DIRECTORY holding a binary of that name — ours sources
+# the Venice key from a 600 file, because Noodle spawns cooks with a scrubbed
+# environment.
+#
+# Model choice is forced by Venice's Responses API, the only dialect Codex speaks:
+#   z-ai-glm-5-3-flash  → works (verified: real file-write tool call)
+#   claude-opus-5-5     → works
+#   kimi-k3             → /responses returns status=incomplete with empty output,
+#                         so it cannot drive Codex. Use it through Hermes subagents
+#                         (which speak /chat/completions) instead.
 [routing.defaults]
 provider = "codex"
-model = "claude-opus-5-5"
+model = "z-ai-glm-5-3-flash"
 
 [skills]
 paths = [".agents/skills"]
@@ -17,9 +22,8 @@ paths = [".agents/skills"]
 max_concurrency = 3
 
 [agents.codex]
-# Execution runs through Venice-pinned Hermes subagents (see docs/DESIGN.md),
-# not through a Codex/Claude CLI: Noodle only drives those two, and Claude Code
-# cannot talk to Venice at all.
+# A DIRECTORY, not a binary. It must contain an executable named `codex`.
+path = "/home/vivgates/.local/share/venice-cli/bin"
 args = ["-c", "model_provider=venice"]
 
 [adapters.backlog.scripts]
