@@ -1,16 +1,16 @@
 mode = "auto"
 
-# Execution: Codex CLI pointed at Venice. Noodle drives the `codex` binary, and
-# agents.codex.path is a DIRECTORY holding a binary of that name — ours sources
-# the Venice key from a 600 file, because Noodle spawns cooks with a scrubbed
-# environment.
+# Execution: Noodle holds the backlog and the method; a Noodle *cook* is a Hermes
+# subagent pinned to a Venice model via the chat completions API (delegation.provider
+# = custom, delegation.model = kimi-k3; z-ai-glm-5-3-flash for cheap stages).
 #
-# Model choice is forced by Venice's Responses API, the only dialect Codex speaks:
-#   z-ai-glm-5-3-flash  → works (verified: real file-write tool call)
-#   claude-opus-5-5     → works
-#   kimi-k3             → /responses returns status=incomplete with empty output,
-#                         so it cannot drive Codex. Use it through Hermes subagents
-#                         (which speak /chat/completions) instead.
+# The loop itself stays PARKED. Noodle drives only the Claude and Codex CLIs: Claude
+# Code cannot talk to Venice (no /v1/messages), and Codex, though it works for the
+# Venice-hosted Claude models, cannot be driven by kimi-k3 at all — Venice's
+# /responses returns status=incomplete with empty output for it, and glm-5-3-flash
+# hangs indefinitely through Codex. See the `codex` skill, "Pointing Codex at another
+# backend". Do not run `noodle start` until a cook is wired through a CLI that
+# actually completes a file-writing task.
 [routing.defaults]
 provider = "codex"
 model = "z-ai-glm-5-3-flash"

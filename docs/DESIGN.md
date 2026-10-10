@@ -79,9 +79,13 @@ up to three rounds, then `Match result`.
 ## How this gets built
 
 Noodle holds the backlog (`todos.md`) and the working method (`.agents/skills/`),
-and it is the scheduler of record. Its own loop is **parked**: Noodle drives only
-the Claude and Codex CLIs, Claude Code cannot talk to Venice at all, and Codex is
-not wanted here.
+and it is the scheduler of record. Its own loop is **parked**, for a measured
+reason: Noodle drives only the Claude and Codex CLIs, Claude Code cannot talk to
+Venice at all (no `/v1/messages`), and Codex can carry the Venice-hosted Claude
+models but not the ones this project runs on — Venice's `/responses` returns
+`status=incomplete` with empty output for `kimi-k3`, and `glm-5-3-flash` hangs
+indefinitely through it. A loop whose cook cannot complete a file write is worse
+than no loop, so the backlog is driven rather than spun.
 
 Work is executed by Hermes subagents pinned to Venice models — `kimi-k3` as the
 workhorse, `z-ai-glm-5-3-flash` for cheap stages — one backlog item at a time, each
