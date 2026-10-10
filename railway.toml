@@ -1,0 +1,12 @@
+# Railway runs the whole gate itself: a build that fails typecheck, tests or the
+# bundle never reaches production. This replaces GitHub Actions, which the git
+# token cannot push to (it lacks the `workflow` scope).
+[build]
+buildCommand = "npm ci && npm run typecheck && npm run build && npm test"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/healthz"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
