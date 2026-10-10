@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Two chefs, five secret ingredients, one table voting on the dish they would rather eat." />
+    <title>Mystery Menu</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <header class="brand">
+        <span class="brand__dot"></span>
+        <h1>Mystery<span>Menu</span></h1>
+      </header>
+
+      <section class="pitch">
+        <p class="pitch__lede">
+          Two chefs. Five ingredients each. Nobody sees them until the referee says the word.
+        </p>
+        <p class="pitch__sub">
+          Bid for every ingredient against the clock, plate the dish, then let the table vote on the one
+          they would actually eat.
+        </p>
+      </section>
+
+      <section class="cards" aria-label="How a match runs">
+        <article class="card">
+          <span class="card__num">01</span>
+          <h2>Scan in</h2>
+          <p>The host opens a room, the table scans the barcode. No accounts, no passwords.</p>
+        </article>
+        <article class="card">
+          <span class="card__num">02</span>
+          <h2>Bid blind</h2>
+          <p>Ten ingredients, ten coins, a ten second clock. Say “take it” and the ingredient is yours.</p>
+        </article>
+        <article class="card">
+          <span class="card__num">03</span>
+          <h2>Vote</h2>
+          <p>The table picks the dish they would rather eat. Best of three rounds takes the match.</p>
+        </article>
+      </section>
+
+      <footer class="foot">
+        <p id="status" class="foot__status">Checking the kitchen…</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

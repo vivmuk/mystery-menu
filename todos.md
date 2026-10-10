@@ -7,7 +7,7 @@ Venice service layer, then gameplay, then art and the avatar, then polish and
 deploy. Read `docs/DESIGN.md` before starting any item.
 
 ## Inbox
-1. [ ] Bootstrap the app skeleton: Node + Express + socket.io server that binds 0.0.0.0:$PORT, plus a Vite + TypeScript mobile PWA shell with a /healthz endpoint ~medium #bootstrap
+1. [ ] Harden the build harness: GitHub Actions CI running typecheck, test and build, plus a smoke test that boots the built server and proves a real socket round-trip ~small #bootstrap
 2. [ ] Room + barcode join: create a room with a 4-letter code, render a QR code, let players join with name and colour, no accounts or passwords anywhere ~medium #join
 3. [ ] Venice service layer: server-side-only client for text, image and TTS using the key from the environment, with timeouts, retries and a /api/venice/health probe ~medium #venice
 4. [ ] Ingredient generation: from a deck, a vegetarian-only filter and one cross-cuisine twist, generate 5 ingredients per chef as strict validated JSON ~large #gameplay

@@ -1,0 +1,62 @@
+# Mystery Menu
+
+**Two chefs. Five secret ingredients each. One table voting on the dish they would actually eat.**
+
+Mobile-first party game. The host opens a room on their phone, the table scans a
+barcode, and two of them are handed five ingredients apiece — generated behind the
+scenes, shown to nobody, revealed one at a time by a 3D referee who talks. Every
+ingredient goes to the highest bidder against a ten second clock. Then the table
+votes.
+
+<p align="center">
+  <img src="assets/hero.png" alt="Mystery Menu — two chefs bidding over a covered dish" width="720" />
+</p>
+
+## How a match runs
+
+| Phase | What happens |
+|-------|--------------|
+| **Lobby** | Host creates a room, everyone else scans the QR code and types a name. No accounts, no passwords, no email. |
+| **Deck** | A theme is drawn (Pizza, Bowls, Tacos, Indian, Chaos Mix) and ten ingredients are generated for the match, five per chef. Neither chef sees them. |
+| **Auction** | The referee announces one ingredient. Both chefs bid upward from a budget of ten coins against a ten second clock. Concede with **Take it**. Run out of coins and you take everything left for free. |
+| **Plating** | Both dishes assemble in 3D from their five ingredients, the cross-cuisine twist landing last. |
+| **Vote** | The table votes once, anonymously, on the dish they would rather eat. Best of three rounds takes the match. |
+
+The vegetarian filter swaps the whole ingredient pool, so a dish either is or is not
+safe for the table before anybody bids on it.
+
+## Under the hood
+
+- **Server** — Node, Express, socket.io. Rooms live in memory: a party room dies with the evening, and there is no database to leak.
+- **Client** — Vite + TypeScript PWA, built for a 360px touch screen first.
+- **3D** — Three.js: a stylised kitchen, one recurring referee character, lip sync driven by the audio it just spoke.
+- **AI** — Venice models do the ingredient generation, the referee's lines, the ingredient art and the voice. Every key stays server-side.
+- **Loop** — [Noodle](https://github.com/poteto/noodle) runs the build. The scheduled skills read `todos.md` and dispatch the work in isolated worktrees.
+
+## Run it
+
+```bash
+npm install
+npm test          # health endpoint + boot check
+npm run typecheck
+npm run build
+npm start         # http://localhost:3000
+```
+
+`GET /healthz` returns `{"ok":true,"service":"mystery-menu"}`.
+
+## Layout
+
+```
+.agents/skills/   Noodle skills: schedule, execute, quality
+adapters/         backlog adapters that read todos.md
+docs/DESIGN.md    the locked product spec — read this first
+server/           Express + socket.io
+src/              PWA client
+tests/            boot and health coverage
+todos.md          the backlog Noodle works through
+```
+
+---
+
+Built for a dinner table, not a leaderboard.
