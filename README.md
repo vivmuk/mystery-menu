@@ -45,6 +45,8 @@ npm start         # http://localhost:3000
 
 `GET /healthz` returns `{"ok":true,"service":"mystery-menu"}`.
 
+Live: https://mystery-menu-production.up.railway.app — Railway deploys `main` on push.
+
 ## Layout
 
 ```
