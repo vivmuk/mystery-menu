@@ -13,7 +13,7 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 4. [x] Ingredient generation: from a deck, a vegetarian-only filter and one cross-cuisine twist, generate 5 ingredients per chef as strict validated JSON ~large #gameplay
 5. [ ] Ingredient art library: a build script that renders the curated canonical ingredient set with a fast image model and caches them as static files ~medium #art
 6. [ ] Live art for the cross-cuisine twist ingredient using a premium image model, cached by ingredient name so a repeat never regenerates ~medium #art
-7. [ ] Draft engine: 10 items, 5 per chef, 10 coins, ascending bids with a 10 second shot clock, Take It concede, forced free take when a chef is broke, single gift or trade per round ~large #gameplay
+7. [x] Draft engine: 10 items, 5 per chef, 10 coins, ascending bids with a 10 second shot clock, Take It concede, forced free take when a chef is broke, single gift or trade per round ~large #gameplay
 8. [ ] AI referee avatar: a 3D Three.js character that announces each ingredient with a Venice TTS voice and real lip sync driven by the audio ~large #avatar
 9. [ ] Vote phase: one anonymous best dish vote for the whole table, with a vegetarian badge on dishes so filtered diners can vote fairly ~medium #gameplay
 10. [ ] 3D kitchen staging: full Three.js scene, dishes assembling from the drafted ingredients, tasteful art direction at 60fps on a mid-range phone ~large #art
