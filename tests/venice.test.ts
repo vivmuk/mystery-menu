@@ -355,9 +355,42 @@ describe('/api/venice/health', () => {
 });
 
 describe('VeniceClient.health', () => {
-  it('makes exactly one cheap text call when reachable', async () => {
-    const fetchMock = vi.fn<VeniceFetch>(async () =>
-      jsonResponse({ choices: [{ message: { content: 'pong' } }] }),
+  /**
+   * A fetch stub that answers the model list and the completion separately. Both are
+   * THUNKS: a fresh Response per call. Cloning one shared Response hangs, because
+   * cancelling a cloned body never settles in undici.
+   */
+  function mocks(
+    completion: () => Response,
+    // Default: a healthy catalogue that advertises everything we configure, so the
+    // tests that are not about model availability do not trip over it.
+    models: (() => Response) | 'throw' = () =>
+      jsonResponse({
+        data: [
+          { id: 'z-ai-glm-5-3-flash' },
+          { id: 'venice-sd35' },
+          { id: 'tts-elevenlabs-turbo-v2-5' },
+        ],
+      }),
+  ) {
+    return vi.fn<VeniceFetch>(async (input) => {
+      if (String(input).includes('/api/v1/models')) {
+        if (models === 'throw') throw new TypeError('fetch failed');
+        return models();
+      }
+      return completion();
+    });
+  }
+
+  it('reports reachable when the model returns null content (regression: the production flake)', async () => {
+    // This is what glm-5-3-flash does when a tiny max_tokens budget is spent on
+    // reasoning instead of content: a healthy 200 with `content: null`. It used to
+    // make this probe report "unreachable" roughly every other call.
+    const fetchMock = mocks(
+      () =>
+        jsonResponse({
+          choices: [{ message: { content: null, reasoning_content: 'Thinking…' } }],
+        }),
     );
     const client = createVeniceClient(fetchMock);
 
@@ -365,11 +398,47 @@ describe('VeniceClient.health', () => {
 
     expect(result.ok).toBe(true);
     expect(result.reachable).toBe(true);
-    expect(result.configured).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.missingModels).toBeUndefined();
+    expectNoLeak(result);
+  });
+
+  it('asks for more than one token, so reasoning cannot masquerade as an outage', async () => {
+    const fetchMock = mocks(() => jsonResponse({ choices: [{ message: { content: 'pong' } }] }));
+    const client = createVeniceClient(fetchMock);
+
+    await client.health();
+
     const [, init] = fetchMock.mock.calls[0]!;
-    const body = JSON.parse(String(init?.body)) as { max_tokens: number; messages: unknown[] };
-    expect(body.max_tokens).toBe(1);
+    const body = JSON.parse(String(init?.body)) as { max_tokens: number };
+    expect(body.max_tokens).toBeGreaterThan(1);
+  });
+
+  it('names a configured model that Venice does not advertise, and stays ok', async () => {
+    const fetchMock = mocks(
+      () => jsonResponse({ choices: [{ message: { content: 'pong' } }] }),
+      () => jsonResponse({ data: [{ id: 'z-ai-glm-5-3-flash' }, { id: 'venice-sd35' }] }),
+    );
+    const client = createVeniceClient(fetchMock);
+
+    const result = await client.health();
+
+    expect(result.ok).toBe(true);
+    expect(result.missingModels).toEqual(['tts-elevenlabs-turbo-v2-5']);
+    expectNoLeak(result);
+  });
+
+  it('stays ok when the model list cannot be read at all (best-effort)', async () => {
+    const fetchMock = mocks(
+      () => jsonResponse({ choices: [{ message: { content: 'pong' } }] }),
+      'throw',
+    );
+    const client = createVeniceClient(fetchMock);
+
+    const result = await client.health();
+
+    expect(result.ok).toBe(true);
+    expect(result.reachable).toBe(true);
+    expect(result.missingModels).toBeUndefined();
     expectNoLeak(result);
   });
 

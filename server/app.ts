@@ -28,9 +28,10 @@ export function createApp(
   });
 
   /**
-   * Is Venice usable right now? One cheap text call answers it. Returns 503
-   * when the key is missing or Venice is unreachable — the service is
-   * degraded, not the request malformed. The key never leaves this process.
+   * Is Venice usable right now? Probes the transport, then checks the configured
+   * model ids against what Venice advertises. Returns 503 when the key is missing
+   * or Venice is unreachable — the service is degraded, not the request malformed.
+   * The key never leaves this process.
    */
   app.get('/api/venice/health', async (_req, res) => {
     const config = veniceConfig();
@@ -43,6 +44,10 @@ export function createApp(
         imageModel: config.imageModel,
         ttsModel: config.ttsModel,
         reachable: result.reachable,
+        ...(result.detail ? { detail: result.detail } : {}),
+        ...(result.missingModels && result.missingModels.length > 0
+          ? { missingModels: result.missingModels }
+          : {}),
       });
     } catch {
       // A health probe must never 500 — an unexpected client error still

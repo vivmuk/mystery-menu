@@ -15,6 +15,12 @@ export const DEFAULT_TTS_MODEL = 'tts-elevenlabs-turbo-v2-5';
 export const DEFAULT_TIMEOUT_MS = 30_000;
 export const DEFAULT_MAX_RETRIES = 2;
 export const DEFAULT_BACKOFF_MS = 500;
+/**
+ * The health probe's completion budget. Deliberately not 1: a reasoning model given a
+ * single token can spend it on reasoning and return `content: null`, and the probe
+ * must not confuse that with an unreachable API.
+ */
+export const HEALTH_MAX_TOKENS = 16;
 
 /** Resolved Venice settings. Never contains the API key. */
 export interface VeniceConfig {
@@ -135,6 +141,11 @@ export interface VeniceHealthResult {
   /** Set when the key was missing before any network call was attempted. */
   configured: boolean;
   detail?: string;
+  /**
+   * Configured model ids that Venice does not advertise. Absent when the model
+   * list could not be read — that is best-effort and never fails a health check.
+   */
+  missingModels?: string[];
 }
 
 /** Injectable fetch, so tests never touch the network. */
@@ -161,6 +172,32 @@ function isAbortError(err: unknown): boolean {
     (err instanceof Error && err.name === 'TimeoutError') ||
     (typeof err === 'object' && err !== null && (err as { code?: unknown }).code === 23)
   );
+}
+
+/**
+ * The model ids Venice advertises, or `undefined` if the list cannot be read.
+ * Best-effort by design: it answers "is a configured model id real?", which is a
+ * config check, not a reachability check — so it never fails a health probe.
+ */
+async function listModelIds(
+  fetchImpl: VeniceFetch,
+  timeoutMs: number,
+): Promise<string[] | undefined> {
+  try {
+    const key = readApiKey('text');
+    const response = await fetchImpl(`${VENICE_BASE_URL}/api/v1/models`, {
+      method: 'GET',
+      headers: { authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) return undefined;
+    const raw = (await response.json()) as { data?: { id?: unknown }[] };
+    return (raw.data ?? [])
+      .map((entry) => entry?.id)
+      .filter((id): id is string => typeof id === 'string');
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -310,13 +347,41 @@ export function createVeniceClient(fetchImpl: VeniceFetch = fetch): VeniceClient
         ...config,
       };
       try {
-        // One cheap text call: one token out, nothing in.
-        await this.chat([{ role: 'user', content: 'ping' }], {
-          timeoutMs,
-          maxRetries: 0,
-          maxTokens: 1,
-        });
-        return { ...base, ok: true, reachable: true };
+        // Judge reachability on the TRANSPORT, never on the completion body. A
+        // reasoning model handed a tiny max_tokens can spend the whole budget on
+        // reasoning and return `content: null` from a perfectly healthy API, which
+        // made this probe report "unreachable" about half the time in production.
+        const response = await requestVenice(
+          'text',
+          '/api/v1/chat/completions',
+          {
+            model: config.textModel,
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: HEALTH_MAX_TOKENS,
+          },
+          { timeoutMs, maxRetries: 0 },
+          fetchImpl,
+        );
+        // Drain the body so the socket is released. Not `body.cancel()`: cancelling
+        // the body of a cloned response never settles in undici, and draining is
+        // deterministic. We do not care about the content — only that it arrived.
+        await response.arrayBuffer().catch(() => undefined);
+
+        // Best-effort: a typo'd model id should surface to an operator, not to a
+        // party mid-game. A failure to read the list never fails the check.
+        const advertised = await listModelIds(fetchImpl, timeoutMs);
+        const missingModels = advertised
+          ? [config.textModel, config.imageModel, config.ttsModel].filter(
+              (id) => !advertised.includes(id),
+            )
+          : [];
+
+        return {
+          ...base,
+          ok: true,
+          reachable: true,
+          ...(missingModels.length > 0 ? { missingModels } : {}),
+        };
       } catch (err) {
         if (err instanceof VeniceConfigError) {
           return { ...base, configured: false, detail: err.message };
