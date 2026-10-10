@@ -23,4 +23,4 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 14. [ ] Host seating: decide whether the host occupies seat 1 as a chef or spectates. Today the host is seat 1 and is therefore always a chef, which surprises a host who only wanted to run the room ~small #gameplay
 15. [x] Reveal-phase state machine: own hand persistence and the single authorised reveal broadcast, so a hand cannot leak into room:state before the referee calls it ~medium #gameplay
 16. [x] POST /api/rooms/:code/hands: a thin route over the existing pure `generateHands` surface, once draft state exists to attach it to ~small #gameplay
-17. [ ] Mobile auction UI: bidding buttons (raise, Take it), the 10-second shot clock ring, live coin purses, the reveal beat and the plate view, thumb-friendly at 360px, driven only by the public draft state ~large #ui
+17. [x] Mobile auction UI: bidding buttons (raise, Take it), the 10-second shot clock ring, live coin purses, the reveal beat and the plate view, thumb-friendly at 360px, driven only by the public draft state ~large #ui

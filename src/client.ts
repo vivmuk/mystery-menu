@@ -1,21 +1,19 @@
 import QRCode from 'qrcode';
 import { io, type Socket } from 'socket.io-client';
 
-/** Mirrors server/rooms.ts — the payload everyone in a room receives. */
-interface RoomPlayer {
-  id: string;
-  name: string;
-  colour: string;
-  role: 'chef' | 'table';
-}
+import type { RoomStatePayload as RoomState } from '../server/rooms.ts';
+import type { Chef, PublicDraftState } from '../server/draft/engine.ts';
+import type { DraftErrorPayload } from '../server/protocol.ts';
+import { mountAuction } from './auction.ts';
 
-interface RoomState {
-  code: string;
-  capacity: number;
-  players: RoomPlayer[];
-}
-
-type ScreenName = 'home' | 'host' | 'lobby';
+let roomCode: string | null = null;
+let roomState: RoomState | null = null;
+let draftState: PublicDraftState | null = null;
+let playerList: HTMLUListElement | null = null;
+let hostSocket: string | null = null;
+const seatSockets: Record<Chef, string | null> = { chefOne: null, chefTwo: null };
+let disposeAuction: (() => void) | null = null;
+let preparing = false;
 
 /** A player is a name and a colour, never an account. */
 const PLAYER_COLOURS = [
@@ -49,6 +47,9 @@ function el<K extends keyof HTMLElementTagNameMap>(
 
 function clearScreen(): HTMLElement {
   if (!app) throw new Error('no #app mount point');
+  disposeAuction?.();
+  disposeAuction = null;
+  playerList = null;
   app.replaceChildren();
   return app;
 }
@@ -238,6 +239,7 @@ let joined = false;
 
 function joinRoom(code: string, name: string, colour: string): void {
   joined = true;
+  roomCode = code;
   const emit = (): void => {
     socket.emit('join', { code, name, colour });
   };
@@ -245,29 +247,166 @@ function joinRoom(code: string, name: string, colour: string): void {
   else socket.once('connect', emit);
 }
 
-function wireRoomState(code: string, list: HTMLUListElement): void {
-  socket.on('room:state', (state: RoomState) => {
-    if (state.code !== code) return;
-    list.replaceChildren(
-      ...state.players.map((player) => {
-        const row = el('li', 'player-list__row');
-        const dot = el('span', 'player-list__dot');
-        dot.style.backgroundColor = player.colour;
-        row.appendChild(dot);
-        row.appendChild(el('span', 'player-list__name', player.name));
-        row.appendChild(el('span', 'player-list__role', player.role === 'chef' ? 'chef' : 'table'));
-        return row;
-      }),
-    );
-    const seatCount = `${state.players.length}/${state.capacity} seated`;
-    setStatus(joined ? `Room ${code} — ${seatCount}.` : seatCount);
-  });
+function wireRoomState(_code: string, list: HTMLUListElement): void {
+  playerList = list;
+}
 
-  socket.on('join:error', (error: { reason: string }) => {
-    setStatus(error.reason);
-    joined = false;
+function myChef(): Chef | null {
+  return seatSockets.chefOne === socket.id ? 'chefOne' : seatSockets.chefTwo === socket.id ? 'chefTwo' : null;
+}
+
+function showDraftError(message: string): void {
+  const error = document.querySelector<HTMLElement>('#draft-error');
+  if (error) {
+    error.textContent = message;
+    error.hidden = false;
+    error.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  }
+  setStatus(message);
+}
+
+function renderAuction(newReveal = false, newAward = false): void {
+  if (!draftState || !roomCode) return;
+  document.querySelector('.stage')?.classList.add('stage--auction');
+  const names = { chefOne: 'Chef One', chefTwo: 'Chef Two' };
+  for (const chef of ['chefOne', 'chefTwo'] as const) {
+    names[chef] = roomState?.players.find((player) => player.id === seatSockets[chef])?.name ?? names[chef];
+  }
+  disposeAuction = mountAuction(clearScreen(), draftState, {
+    code: roomCode, chef: myChef(), names, host: hostSocket === socket.id,
+    connected: socket.connected, newReveal, newAward,
+    send: (event, payload) => socket.emit(event, payload),
   });
 }
+
+function updateHostSetup(): void {
+  if (!app || draftState || hostSocket !== socket.id) return;
+  let setup = document.querySelector<HTMLElement>('#draft-setup');
+  if (!setup) {
+    setup = el('section', 'card draft-setup');
+    setup.id = 'draft-setup';
+    setup.append(el('h2', undefined, 'Let’s cook'), el('p', undefined, 'Two chefs. Ten secret ingredients. Choose your menu.'));
+    const label = el('label', 'setup-label', 'Menu');
+    const menu = el('select', 'menu-select');
+    menu.id = 'draft-menu';
+    menu.name = 'deckId';
+    menu.autocomplete = 'off';
+    for (const [value, name] of [['pizza', 'Pizza'], ['bowls', 'Bowls'], ['tacos', 'Tacos'], ['indian', 'Indian'], ['chaos', 'Chaos Mix']]) {
+      const option = el('option', undefined, name);
+      option.value = value!;
+      menu.append(option);
+    }
+    label.append(menu);
+    const dietary = el('label', 'dietary-toggle');
+    const checkbox = el('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'draft-vegetarian';
+    checkbox.name = 'vegetarianOnly';
+    dietary.append(checkbox, el('span', undefined, 'Vegetarian only'));
+    const error = el('p', 'draft-error');
+    error.id = 'draft-error';
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+    const start = el('button', 'btn btn--primary', 'Start draft');
+    start.type = 'button';
+    start.id = 'draft-start';
+    start.addEventListener('click', () => void prepareDraft());
+    setup.append(label, dietary, error, start);
+    app.append(setup);
+  }
+  const button = setup.querySelector<HTMLButtonElement>('#draft-start');
+  if (button) button.disabled = preparing || !socket.connected || roomState?.players.filter((player) => player.role === 'chef').length !== 2;
+}
+
+async function prepareDraft(): Promise<void> {
+  if (preparing || !roomCode || !socket.connected || hostSocket !== socket.id) return;
+  const code = roomCode;
+  const deckId = document.querySelector<HTMLSelectElement>('#draft-menu')?.value;
+  const vegetarianOnly = document.querySelector<HTMLInputElement>('#draft-vegetarian')?.checked ?? false;
+  preparing = true;
+  let startSent = false;
+  updateHostSetup();
+  setStatus('Preparing secret ingredients…');
+  try {
+    // The receipt contains no hands. Starting is still host-authorized by socket.
+    const res = await fetch(`/api/rooms/${encodeURIComponent(code)}/hands`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ deckId, vegetarianOnly }),
+    });
+    const receipt = await res.json() as { ok?: boolean; message?: string };
+    if (!res.ok || receipt.ok !== true) throw new Error(receipt.message ?? 'Could not prepare the draft. Try again.');
+    if (!socket.connected) throw new Error('Connection lost. Reopen the room before starting.');
+    socket.emit('draft:start', { code });
+    startSent = true;
+  } catch (error) {
+    showDraftError(error instanceof Error ? error.message : 'Could not prepare the draft. Try again.');
+  } finally {
+    if (!startSent) preparing = false;
+    updateHostSetup();
+  }
+}
+
+socket.on('room:state', (state: RoomState) => {
+  if (state.code !== roomCode) return;
+  const firstSnapshot = roomState === null;
+  roomState = state;
+  const chefs = state.players.filter((player) => player.role === 'chef');
+  // room:state has no seat IDs. Track stable seats from the initial lobby,
+  // then fill only vacated seats; never renumber the surviving chef.
+  if (firstSnapshot) {
+    seatSockets.chefOne = chefs[0]?.id ?? null;
+    seatSockets.chefTwo = chefs[1]?.id ?? null;
+    if (state.players.length === 1 && state.players[0]?.id === socket.id) hostSocket = socket.id ?? null;
+  } else {
+    for (const chef of ['chefOne', 'chefTwo'] as const) {
+      if (!chefs.some((player) => player.id === seatSockets[chef])) seatSockets[chef] = null;
+    }
+    for (const player of chefs) {
+      if (Object.values(seatSockets).includes(player.id)) continue;
+      if (seatSockets.chefOne === null) seatSockets.chefOne = player.id;
+      else if (seatSockets.chefTwo === null) seatSockets.chefTwo = player.id;
+    }
+  }
+  if (!playerList && !draftState && hostSocket !== socket.id) showPlayerLobby(state.code);
+  playerList?.replaceChildren(...state.players.map((player) => {
+    const row = el('li', 'player-list__row');
+    const dot = el('span', 'player-list__dot');
+    dot.style.backgroundColor = player.colour;
+    row.append(dot, el('span', 'player-list__name', player.name), el('span', 'player-list__role', player.role));
+    return row;
+  }));
+  setStatus(`Room ${state.code} · ${state.players.length}/${state.capacity} seated.`);
+  if (draftState) renderAuction();
+  else updateHostSetup();
+});
+
+socket.on('draft:state', (state: PublicDraftState) => {
+  preparing = false;
+  const previous = draftState;
+  draftState = state;
+  setStatus(`Room ${roomCode} · Round ${state.round} · ${state.phase === 'auction' ? 'Bidding is live.' : state.phase === 'reveal' ? 'Next reveal ready.' : 'Dishes on the table.'}`);
+  const item = state.auction?.item ?? state.lastAward?.item;
+  const oldItem = previous?.auction?.item ?? previous?.lastAward?.item;
+  renderAuction(item?.slot !== oldItem?.slot, state.lastAward?.item.slot !== previous?.lastAward?.item.slot);
+});
+
+socket.on('draft:error', (error: DraftErrorPayload) => {
+  preparing = false;
+  if (draftState) renderAuction(); // Release request lock without changing the public state.
+  else updateHostSetup();
+  showDraftError(error.message);
+});
+
+socket.on('join:error', (error: { reason: string }) => {
+  setStatus(error.reason);
+  joined = false;
+});
+
+socket.on('disconnect', () => {
+  if (draftState) renderAuction();
+  else updateHostSetup();
+  setStatus('Connection lost. Reopen the room to take a new seat; host reconnection is not supported yet.');
+});
 
 /* ------------------------------------------------------------------ */
 /* Boot                                                                */

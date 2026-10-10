@@ -151,5 +151,40 @@ the mutation restored a passing test. No mutation is committed.
 Connect anonymous voting (item 9), including a tie policy, trusted round results
 and new-round generation. Decide how to resolve a pending trade when its recipient
 disconnects, host reconnect/transfer, and whether opening turns should alternate
-or twist ownership should be constrained. Wire public-state replay for late joiners
-and the mobile auction UI (item 17); host seating remains item 14.
+or twist ownership should be constrained. Wire public-state replay for late joiners;
+host seating remains item 14.
+
+## Mobile auction UI (item 17)
+
+The DOM/TypeScript client consumes `draft:state` without importing any server code
+at runtime. It renders only announced items, public purses, current bids and awarded
+plates. A local countdown is clamped to 0–10 seconds from the server's `deadline`;
+expiry disables inputs and waits for the server's award. No client timeout action
+is sent. Reduced motion keeps the progress bar static and removes animations.
+
+The host lobby prepares a selected menu through the existing hands route (receipt
+only), then sends `draft:start`. Only the host sees start/reveal. Chef inputs use
+stable seat identities tracked from lobby snapshots, not a renumbered player list.
+The existing wire format omits explicit host/seat identities and active-state
+replay, so late joining after vacancies, page reload, and host reconnect/transfer
+remain protocol follow-ups, not claims of this UI. Server authorization remains
+the final authority. `draft:error` is a sender-only inline alert.
+
+`tests/auction.test.ts` covers clock boundaries and legal bidding. An optional
+real-browser acceptance script uses an already installed Playwright without adding
+an app dependency. Start the built app on a test port with generation configured to
+use its fallback (no key), then run:
+
+```sh
+AUCTION_TEST_URL=http://127.0.0.1:3187 \
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs \
+node tests/auction.browser.mjs
+```
+
+The script plays a ten-item round on two 360px browser pages, checks host-only
+controls, sender-only errors, an affordable bid and an unaffordable counterbid,
+Take it, timeout, coin deductions, two five-item plates, finale twist cues,
+reduced motion, keyboard focus and no overflow/tiny tap targets at
+320/360/390/414/768/1280px. `AUCTION_TEST_OUTPUT` optionally saves screenshots.
+Ingredient artwork, gift/trade controls, voting and new-round controls remain
+separate backlog work.
