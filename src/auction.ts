@@ -53,10 +53,11 @@ export function renderPlatedDishes(state: PublicDraftState, names: Record<Chef, 
     // The last two slots of a round are the twists; `slot` is `<round>:<index>`.
     const twists = items.filter((item) => Number(item.slot.split(':')[1] ?? '0') >= 8).length;
     if (twists) {
-      plate.append(el('span', 'stage-plate__twist', twists > 1 ? '2 cross-cuisine twists' : 'cross-cuisine twist'));
+      plate.append(el('span', 'stage-plate__twist', twists > 1 ? '2 twists' : 'twist'));
     }
-    plate.append(el('span', 'stage-plate__count', `${items.length} / 5`));
-    card.append(plate);
+    // The counter belongs under the plate, not inside it: in the well it sat
+    // behind the ring and a tile covered it.
+    card.append(plate, el('p', 'stage-plate__count', `${items.length} of 5 ingredients`));
     const list = el('ul', 'stage-plate__list');
     for (const item of items) list.append(el('li', '', item.ingredient.name));
     if (items.length) card.append(list);

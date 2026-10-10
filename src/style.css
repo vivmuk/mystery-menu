@@ -789,13 +789,17 @@ select:focus-visible,
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 31%;
-  height: 31%;
+  width: 28%;
+  height: 28%;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.65);
-  transform: translate(-50%, -50%) rotate(calc(var(--i) * 72deg)) translateY(-32%)
+  /* The ring radius is a percentage of the tile, not of the plate: 107% of a
+   * 28% tile puts its centre at 30% of the plate, so the ring of five sits
+   * just inside the rim with a gap between neighbours. (32% of the tile, the
+   * first attempt, parked the whole dish in the middle of the plate.) */
+  transform: translate(-50%, -50%) rotate(calc(var(--i) * 72deg)) translateY(-107%)
     rotate(calc(var(--i) * -72deg));
 }
 
@@ -804,19 +808,21 @@ select:focus-visible,
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  padding: 6px 11px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: linear-gradient(180deg, #ff8a4d, var(--orange));
   color: #210c02;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
   box-shadow: 0 0 24px -4px rgba(255, 106, 43, 0.95);
 }
 
 .stage-plate__empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--muted); font-size: 13px; }
-.stage-plate__count { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); font-size: 12px; font-weight: 800; color: #e6dcff; }
+/* A caption under the plate: inside the well it collided with the ring. */
+.stage-plate__count { margin: 10px 0 0; font-size: 12px; font-weight: 800; color: #e6dcff; }
 
 .stage-plate__list {
   margin: 14px 0 0;
