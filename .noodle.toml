@@ -1,4 +1,4 @@
-mode = "supervised"
+mode = "auto"
 
 # The loop's brain runs on Venice models: Noodle dispatches the Codex CLI,
 # and the Codex CLI is pointed at Venice's OpenAI-compatible Responses API
