@@ -24,3 +24,4 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 15. [x] Reveal-phase state machine: own hand persistence and the single authorised reveal broadcast, so a hand cannot leak into room:state before the referee calls it ~medium #gameplay
 16. [x] POST /api/rooms/:code/hands: a thin route over the existing pure `generateHands` surface, once draft state exists to attach it to ~small #gameplay
 17. [x] Mobile auction UI: bidding buttons (raise, Take it), the 10-second shot clock ring, live coin purses, the reveal beat and the plate view, thumb-friendly at 360px, driven only by the public draft state ~large #ui
+18. [ ] Round reveals can repeat a name: both chefs may be dealt the same core ingredient, so the same ingredient is announced twice in one round and reads like a bug on screen. Exclude cross-hand duplicates at deal time, or label the owner ~small #gameplay
