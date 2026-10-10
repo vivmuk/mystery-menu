@@ -76,6 +76,19 @@ up to three rounds, then `Match result`.
     the twist ingredient, cached by name
   - TTS — one recurring announcer voice, streamed to the client and lip-synced
 
+## How this gets built
+
+Noodle holds the backlog (`todos.md`) and the working method (`.agents/skills/`),
+and it is the scheduler of record. Its own loop is **parked**: Noodle drives only
+the Claude and Codex CLIs, Claude Code cannot talk to Venice at all, and Codex is
+not wanted here.
+
+Work is executed by Hermes subagents pinned to Venice models — `kimi-k3` as the
+workhorse, `z-ai-glm-5-3-flash` for cheap stages — one backlog item at a time, each
+verifying with `npm run typecheck && npm run build && npm test` before committing.
+Railway gates every deploy on the same command, so nothing unverified reaches the
+table.
+
 ## Non-negotiables
 
 - Every secret lives server-side. The Venice key never reaches the browser.
