@@ -182,6 +182,51 @@ describe('dealHands (deterministic core)', () => {
     }
   });
 
+  it('never announces the same ingredient twice in a round', () => {
+    // The bug this guards: both chefs could be dealt the same core, so the
+    // table heard one name announced twice — which reads as a glitch.
+    for (const deck of DECKS) {
+      for (const vegetarianOnly of [false, true]) {
+        for (let seed = 1; seed <= 40; seed++) {
+          const { chefOne, chefTwo } = dealHands(deck, seededRandom(seed), vegetarianOnly);
+          const first = new Set(chefOne.ingredients.map((i) => i.id));
+          const shared = chefTwo.ingredients.filter((i) => first.has(i.id));
+          expect(
+            shared.map((i) => i.name),
+            `${deck.id} vegetarianOnly=${vegetarianOnly} seed=${seed}`,
+          ).toEqual([]);
+          expect(new Set([...chefOne.ingredients, ...chefTwo.ingredients].map((i) => i.id)).size).toBe(
+            INGREDIENTS_PER_CHEF * 2,
+          );
+        }
+      }
+    }
+  });
+
+  it('fails loudly rather than repeating itself when a deck is too small', () => {
+    const pizza = deckById('pizza')!;
+    // Seven cores cannot feed two hands of four distinct cores — better to
+    // refuse than to hand the table a repeated ingredient.
+    const tooSmall = {
+      ...pizza,
+      corePool: pizza.corePool.slice(0, 7),
+      twistPool: pizza.twistPool.slice(0, 2),
+    };
+    expect(() => dealHands(tooSmall, seededRandom(1))).toThrow(/exhausted|cannot feed/);
+
+    // Eight is exactly enough: it must deal, and stay disjoint.
+    const exactlyEnough = {
+      ...pizza,
+      corePool: pizza.corePool.slice(0, 8),
+      twistPool: pizza.twistPool.slice(0, 2),
+    };
+    for (let seed = 1; seed <= 20; seed++) {
+      const { chefOne, chefTwo } = dealHands(exactlyEnough, seededRandom(seed));
+      const ids = new Set([...chefOne.ingredients, ...chefTwo.ingredients].map((i) => i.id));
+      expect(ids.size, `seed=${seed}`).toBe(INGREDIENTS_PER_CHEF * 2);
+    }
+  });
+
   it('produces distinct hands for the two chefs', () => {
     for (const deck of DECKS) {
       const { chefOne, chefTwo } = dealHands(deck, seededRandom(5), true);
@@ -255,6 +300,27 @@ describe('generateHands (Venice-mocked)', () => {
       expect(hand.ingredients).toHaveLength(INGREDIENTS_PER_CHEF);
       // The twist is still a real, vetted twist — never the hallucination.
       expect(deck.twistPool.some((t) => t.id === hand.ingredients[4]?.id)).toBe(true);
+    }
+  });
+
+  it('keeps the live path disjoint across both chefs too', async () => {
+    // The live path deals cores its own way, so it needs its own guard: a
+    // model-chosen twist must not make the round repeat an ingredient either.
+    for (const each of DECKS) {
+      for (const vegetarianOnly of [false, true]) {
+        for (const seed of [3, 17, 29]) {
+          const { client } = fakeVenice(each.twistPool[0]!.id);
+          const { chefOne, chefTwo } = await generateHands(each, {
+            venice: client,
+            random: seededRandom(seed),
+            vegetarianOnly,
+          });
+          const ids = [...chefOne.ingredients, ...chefTwo.ingredients].map((i) => i.id);
+          expect(new Set(ids).size, `${each.id} veg=${vegetarianOnly} seed=${seed}`).toBe(
+            INGREDIENTS_PER_CHEF * 2,
+          );
+        }
+      }
     }
   });
 

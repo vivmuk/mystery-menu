@@ -174,8 +174,15 @@ export function dealHands(deck: Deck, random: Random, vegetarianOnly = false): {
 } {
   const hands: Hand[] = [];
   let chefOneTwistId: string | undefined;
+  // Cross-hand uniqueness: no ingredient is announced twice in one round. Both
+  // chefs draw from the same shrinking pool, so a name the table has just heard
+  // cannot come back around. Every deck holds twelve or more cores, so two
+  // four-core hands always fit; a deck too small fails loudly just below.
+  const dealtIds = new Set<string>();
   for (let chef = 0; chef < 2; chef++) {
-    const core = deck.corePool.filter((i) => !vegetarianOnly || i.vegetarian);
+    const core = deck.corePool.filter(
+      (i) => (!vegetarianOnly || i.vegetarian) && !dealtIds.has(i.id),
+    );
     const twists = deck.twistPool.filter(
       (i) => (!vegetarianOnly || i.vegetarian) && i.id !== chefOneTwistId,
     );
@@ -190,6 +197,7 @@ export function dealHands(deck: Deck, random: Random, vegetarianOnly = false): {
     while (ingredients.length < INGREDIENTS_PER_CHEF - 1) {
       const next = pick(random, core, taken);
       taken.add(next.id);
+      dealtIds.add(next.id);
       ingredients.push(next);
     }
     const twist = pick(random, twists, taken);
@@ -302,15 +310,18 @@ export async function generateHands(
   const vegetarian = (i: Ingredient): boolean => !vegetarianOnly || i.vegetarian;
 
   // Deal the four core ingredients per chef first, so the model sees what it
-  // is twisting. Cores may overlap between chefs; the hands must not match.
+  // is twisting. The two hands never share a core: a round announces each
+  // ingredient name exactly once, so nothing the table just heard returns.
   const dealt: Ingredient[][] = [];
+  const dealtIds = new Set<string>();
   for (let chef = 0; chef < 2; chef++) {
     const taken = new Set<string>();
-    const core = deck.corePool.filter((i) => vegetarian(i) && !taken.has(i.id));
+    const core = deck.corePool.filter((i) => vegetarian(i) && !dealtIds.has(i.id));
     const picks: Ingredient[] = [];
     while (picks.length < INGREDIENTS_PER_CHEF - 1) {
       const next = pick(random, core, taken);
       taken.add(next.id);
+      dealtIds.add(next.id);
       picks.push(next);
     }
     dealt.push(picks);
