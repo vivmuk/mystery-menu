@@ -1,7 +1,7 @@
 import QRCode from 'qrcode';
 import { io, type Socket } from 'socket.io-client';
 
-import type { RoomStatePayload as RoomState } from '../server/rooms.ts';
+import type { RoomStatePayload as RoomState, PlayerRole } from '../server/rooms.ts';
 import type { Chef, PublicDraftState } from '../server/draft/engine.ts';
 import type { DraftErrorPayload } from '../server/protocol.ts';
 import { mountAuction } from './auction.ts';
@@ -55,6 +55,47 @@ function clearScreen(): HTMLElement {
 }
 
 /* ------------------------------------------------------------------ */
+/* Seat choice                                                         */
+/* ------------------------------------------------------------------ */
+
+/** Which seat this browser asks for on the home screen. Cooking by default. */
+let homeSeat: PlayerRole = 'chef';
+
+/**
+ * The two ways to sit down. A host who only wants to run the room picks
+ * "I'm judging" and is never silently drafted into cooking.
+ */
+function seatChooser(initial: PlayerRole, onPick: (seat: PlayerRole) => void): HTMLDivElement {
+  const wrap = el('div', 'seat-choice');
+  const options: Array<{ seat: PlayerRole; label: string; hint: string }> = [
+    { seat: 'chef', label: 'I’m cooking', hint: 'You get five secret ingredients and bid on them.' },
+    { seat: 'table', label: 'I’m judging', hint: 'You vote on the dishes — and can run the room.' },
+  ];
+  const buttons = new Map<PlayerRole, HTMLButtonElement>();
+  for (const option of options) {
+    const button = el('button', 'btn btn--seat', option.label);
+    button.type = 'button';
+    button.title = option.hint;
+    button.dataset.seat = option.seat;
+    button.addEventListener('click', () => {
+      onPick(option.seat);
+      for (const [seat, node] of buttons) {
+        node.classList.toggle('btn--primary', seat === option.seat);
+        node.setAttribute('aria-pressed', String(seat === option.seat));
+      }
+    });
+    buttons.set(option.seat, button);
+    wrap.appendChild(button);
+  }
+  const picked = buttons.get(initial);
+  if (picked) {
+    picked.classList.add('btn--primary');
+    picked.setAttribute('aria-pressed', 'true');
+  }
+  return wrap;
+}
+
+/* ------------------------------------------------------------------ */
 /* Home                                                                */
 /* ------------------------------------------------------------------ */
 
@@ -68,6 +109,11 @@ function showHome(): void {
   createCard.appendChild(el('span', 'card__num', 'HOST'));
   createCard.appendChild(el('h2', undefined, 'Create a game'));
   createCard.appendChild(el('p', undefined, 'You get the barcode. Everyone else scans it.'));
+  // Ask before the room exists: a host who only wants to run the room should
+  // never be quietly seated as a chef.
+  createCard.appendChild(seatChooser(homeSeat, (seat) => {
+    homeSeat = seat;
+  }));
   const createBtn = el('button', 'btn btn--primary', 'Create a room');
   createBtn.type = 'button';
   createBtn.addEventListener('click', () => void createRoom());
@@ -159,7 +205,7 @@ function showHostLobby(code: string): void {
   listCard.appendChild(list);
   root.appendChild(listCard);
 
-  joinRoom(code, 'Host', PLAYER_COLOURS[0].value);
+  joinRoom(code, 'Host', PLAYER_COLOURS[0].value, homeSeat);
   wireRoomState(code, list);
 }
 
@@ -197,9 +243,14 @@ function showJoinForm(code: string): void {
     swatches.appendChild(swatch);
   }
 
+  let seat: PlayerRole = 'chef';
+  const seatRow = seatChooser(seat, (next) => {
+    seat = next;
+  });
+
   const joinBtn = el('button', 'btn btn--primary', 'Sit down');
   joinBtn.type = 'submit';
-  form.append(nameInput, swatches, joinBtn);
+  form.append(nameInput, swatches, seatRow, joinBtn);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const name = nameInput.value.trim();
@@ -207,7 +258,7 @@ function showJoinForm(code: string): void {
       setStatus('Pick a name to sit down.');
       return;
     }
-    joinRoom(code, name, picked);
+    joinRoom(code, name, picked, seat);
   });
   card.appendChild(form);
   root.appendChild(card);
@@ -237,11 +288,11 @@ function showPlayerLobby(code: string): void {
 
 let joined = false;
 
-function joinRoom(code: string, name: string, colour: string): void {
+function joinRoom(code: string, name: string, colour: string, role: PlayerRole = 'chef'): void {
   joined = true;
   roomCode = code;
   const emit = (): void => {
-    socket.emit('join', { code, name, colour });
+    socket.emit('join', { code, name, colour, role });
   };
   if (socket.connected) emit();
   else socket.once('connect', emit);
@@ -372,7 +423,10 @@ socket.on('room:state', (state: RoomState) => {
     const row = el('li', 'player-list__row');
     const dot = el('span', 'player-list__dot');
     dot.style.backgroundColor = player.colour;
-    row.append(dot, el('span', 'player-list__name', player.name), el('span', 'player-list__role', player.role));
+    // Say the seat in the table's own language: COOKING or JUDGING, never the
+    // internal role name — a host who chose to judge should recognise himself.
+    const role = player.role === 'chef' ? 'COOKING' : 'JUDGING';
+    row.append(dot, el('span', 'player-list__name', player.name), el('span', 'player-list__role', role));
     return row;
   }));
   setStatus(`Room ${state.code} · ${state.players.length}/${state.capacity} seated.`);

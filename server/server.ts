@@ -51,7 +51,7 @@ export function createGameServer(): GameServer {
         socket.emit('join:error', error);
         return;
       }
-      const result = registry.join(room, socket.id, request.name, request.colour);
+      const result = registry.join(room, socket.id, request.name, request.colour, request.role);
       if (!result.ok) {
         socket.emit('join:error', { reason: result.error } satisfies JoinErrorPayload);
         return;

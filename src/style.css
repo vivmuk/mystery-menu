@@ -220,8 +220,25 @@ body {
 
 .swatches {
   display: flex;
+  gap: 8px;
   flex-wrap: wrap;
-  gap: 10px;
+}
+
+/* The two ways to sit down: cook, or judge. Full width so it is thumb-easy. */
+.seat-choice {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.seat-choice .btn {
+  flex: 1;
+  min-height: 52px;
+  font-size: 0.95rem;
+}
+
+.seat-choice .btn--primary {
+  box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.25);
 }
 
 .swatch {

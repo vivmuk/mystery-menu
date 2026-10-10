@@ -94,7 +94,13 @@ export class RoomRegistry {
     return this.rooms.get(normalizeCode(code));
   }
 
-  join(room: Room, socketId: string, rawName: unknown, rawColour: unknown): JoinResult {
+  join(
+    room: Room,
+    socketId: string,
+    rawName: unknown,
+    rawColour: unknown,
+    rawRole?: unknown,
+  ): JoinResult {
     const name = typeof rawName === 'string' ? rawName.trim() : '';
     const colour = typeof rawColour === 'string' ? rawColour.trim() : '';
     if (!name) return { ok: false, error: 'Pick a name to sit down.' };
@@ -114,7 +120,18 @@ export class RoomRegistry {
       return { ok: false, error: `Someone is already seated as “${name}”. Pick another name.` };
     }
     const seats = this.seats.get(room.code)!;
-    const chef = seats.chefOne === null ? 'chefOne' : seats.chefTwo === null ? 'chefTwo' : null;
+    // Every player chooses at the door: cook, or just judge. A judge never
+    // takes a chef seat, so a host who only wanted to run the room is not
+    // silently drafted into cooking. Anything else means "cook", which is
+    // what every client that predates this choice already expects.
+    const judgesOnly = rawRole === 'table';
+    const chef = judgesOnly
+      ? null
+      : seats.chefOne === null
+        ? 'chefOne'
+        : seats.chefTwo === null
+          ? 'chefTwo'
+          : null;
     const player: Player = { id: socketId, name, colour, role: chef ? 'chef' : 'table' };
     if (chef) seats[chef] = socketId;
     if (seats.host === null && room.players.length === 0) seats.host = socketId;

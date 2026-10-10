@@ -145,6 +145,47 @@ describe('room socket protocol', () => {
     expect(latest?.players[2]?.role).toBe('table');
   });
 
+  it('seats a host who only wants to run the room as a judge, not a chef', async () => {
+    const created = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
+    const sockets = await Promise.all(['Host', 'Cook One', 'Cook Two'].map(() => connect()));
+    let latest: RoomStatePayload | undefined;
+    sockets[0]!.on('room:state', (state: RoomStatePayload) => {
+      latest = state;
+    });
+    // The host asks for the table seat: "I'm judging".
+    const first = await emitAndWait<RoomStatePayload>(
+      sockets[0]!,
+      'join',
+      { code: created.code, name: 'Host', colour: '#ff5a1f', role: 'table' } satisfies JoinRequest,
+      'room:state',
+    );
+    expect(first.players[0]?.role).toBe('table');
+    for (const [index, name] of ['Cook One', 'Cook Two'].entries()) {
+      await emitAndWait<RoomStatePayload>(
+        sockets[index + 1]!,
+        'join',
+        { code: created.code, name, colour: '#1f5aff' } satisfies JoinRequest,
+        'room:state',
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    // A judge never eats a chef seat, so both cooking seats went to the cooks.
+    expect(latest?.players.map((player) => player.role)).toEqual(['table', 'chef', 'chef']);
+  });
+
+  it('still cooks by default when nobody asks for a seat', async () => {
+    const created = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
+    const guest = await connect();
+    const state = await emitAndWait<RoomStatePayload>(
+      guest,
+      'join',
+      { code: created.code, name: 'First', colour: '#ff5a1f' } satisfies JoinRequest,
+      'room:state',
+    );
+    // Unchanged behaviour: silence means "I'm cooking".
+    expect(state.players[0]?.role).toBe('chef');
+  });
+
   it('removes a player on disconnect and rebroadcasts', async () => {
     const created = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
     const host = await connect();
