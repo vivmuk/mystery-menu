@@ -59,6 +59,40 @@ A vegetarian badge marks dishes that meet the filter so a filtered diner can vot
 fairly. The dish with more votes wins the round; best of three rounds wins the
 match. No guess-the-chef mode: the vote is about the dish, always.
 
+## Votes
+
+- **Who:** table seats only. With no table seats, both chefs vote, including for
+  their own dish. Eligibility is frozen when the host opens voting. Stable seat
+  identity is the registry's socket-bound player id, never name/colour/list index;
+  the sender must still be seated in this room. No reconnect identity is added.
+- **When:** the engine must report `plating`, with two five-item plates, no auction
+  and no pending trade. `match-result` cannot gate voting: it requires prior vote
+  results. Opening locks dishes against further exchanges. One ballot each;
+  duplicates/changes throw typed errors. All eligible ballots automatically close
+  the vote; missing/disconnected voters leave it open (no invented auto-ballot).
+- **Anonymous:** only `tally` is broadcast: fixed-order dish labels/ingredients,
+  vegetarian flags/counts, aggregate total, phase, winner and tie. No voter ids,
+  names, colours, keys, eligibility list or arrival ordering. Chef names label
+  dishes, never ballots. Intermediate votes cause **no public event/count change**;
+  the UI receives one final live aggregate batch. This takes precedence over
+  per-arrival live counting, which leaks votes. Sender-only receipts are `{ ok:
+  true }`; errors are sender-only. Single-voter/unanimous results inherently reveal
+  preferences by arithmetic; anonymity cannot hide that while publishing counts.
+- **Dietary:** vegetarian iff **every** final plate ingredient has
+  `vegetarian === true`. Both cards and tally report the badge. Mixed/all-meat
+  dishes explicitly say they contain meat or fish.
+- **Ties:** equal counts finish as a shared tie (`winner: null`), no random/host
+  tie-break or revote. No fabricated winner is fed into the draft's `round-result`.
+  Match scoring/new-round generation and late-join replay remain separate work.
+
+Unit, real-socket and real-browser coverage accompanies the vote. The socket
+walker fails if a private voter id/name/colour appears in any ballot-phase event;
+a temporary `voterId` projection mutation proved the assertion fails, then was
+removed. `tests/vote.browser.mjs` covers waiting/open/locked/winner/tie and measures
+zero overflow/sub-44px targets at 320/360/390/414/768/1280px; a deliberate 5px
+overflow proves the detector fires. Run with installed `PLAYWRIGHT_MODULE` and
+the built app's `VOTE_TEST_URL`.
+
 ## Phases
 
 `Lobby → Deck → Auction (x10 items) → Plating → Vote → Round result`, repeated for

@@ -4,6 +4,8 @@ import { createApp } from './app.ts';
 import { RoomRegistry } from './rooms.ts';
 import { GameSessions } from './game.ts';
 import { DraftError } from './draft/engine.ts';
+import { VoteError } from './votes.ts';
+import type { VoteRequest, VoteCastRequest, VoteErrorPayload, VoteAcceptedPayload } from './protocol.ts';
 import { createVeniceClient } from './venice/client.ts';
 import type { DraftRequest, DraftBidRequest, DraftChefRequest, DraftGiftRequest, DraftTradeRequest, DraftRespondTradeRequest, DraftErrorPayload } from './protocol.ts';
 import type { JoinRequest, JoinErrorPayload } from './protocol.ts';
@@ -30,6 +32,7 @@ export function createGameServer(): GameServer {
   const registry = new RoomRegistry();
   const games = new GameSessions(registry, (code, state) => {
     io.to(roomChannel(code)).emit('draft:state', state);
+    publishWaitingVote(code);
   });
   const http = createServer(createApp(registry, createVeniceClient(), games));
   const io = new SocketServer(http, {
@@ -38,6 +41,20 @@ export function createGameServer(): GameServer {
   });
 
   http.on('close', () => games.dispose());
+
+  function publishWaitingVote(code: string): void {
+    const room = registry.get(code);
+    if (!room) return;
+    const session = games.get(code);
+    if (session.publicState()?.phase !== 'plating') return;
+    const names = { chefOne: 'Chef One', chefTwo: 'Chef Two' };
+    for (const player of room.players) {
+      const chef = registry.chefForSocket(room, player.id);
+      if (chef) names[chef] = player.name;
+    }
+    const vote = session.prepareVote(names);
+    if (vote?.tally.phase === 'waiting') io.to(roomChannel(code)).emit('vote:state', vote);
+  }
 
   io.on('connection', (socket) => {
     const payload: HelloPayload = { service: 'mystery-menu', socketId: socket.id };
@@ -74,6 +91,7 @@ export function createGameServer(): GameServer {
         const session = games.get(room.code);
         action(session);
         io.to(roomChannel(room.code)).emit('draft:state', session.publicState());
+        publishWaitingVote(room.code);
       } catch (error) {
         if (!(error instanceof DraftError)) throw error;
         socket.emit('draft:error', { code: error.code, message: error.message } satisfies DraftErrorPayload);
@@ -94,6 +112,31 @@ export function createGameServer(): GameServer {
     socket.on('draft:gift', (request: DraftGiftRequest) => command(request, false, (session) => session.act({ type: 'gift', chef: request.chef, slot: request.slot })));
     socket.on('draft:trade', (request: DraftTradeRequest) => command(request, false, (session) => session.act({ type: 'trade', chef: request.chef, give: request.give, receive: request.receive })));
     socket.on('draft:respond-trade', (request: DraftRespondTradeRequest) => command(request, false, (session) => session.act({ type: 'respond-trade', chef: request.chef, accept: request.accept })));
+
+    function voteCommand(request: VoteRequest, referee: boolean): void {
+      try {
+        if (!request || typeof request !== 'object' || Array.isArray(request) || typeof request.code !== 'string') throw new VoteError('invalid-action', 'Supply a room code.');
+        const room = registry.get(request.code);
+        if (!room) throw new VoteError('wrong-phase', 'This room is not open.');
+        if (referee && !registry.isHost(room, socket.id)) throw new VoteError('invalid-action', 'Only the room host may open voting.');
+        if (!room.players.some(player => player.id === socket.id)) throw new VoteError('not-eligible', 'Sit in this room before voting.');
+        const session = games.get(room.code);
+        if (referee) {
+          session.openVote(room.players.map(player => ({ key: player.id, role: player.role })));
+          io.to(roomChannel(room.code)).emit('vote:state', session.voteState());
+        } else {
+          const closed = session.castVote(socket.id, (request as VoteCastRequest).dish);
+          socket.emit('vote:accepted', { ok: true } satisfies VoteAcceptedPayload);
+          // No event or count change for intermediate arrivals. Release one batch.
+          if (closed) io.to(roomChannel(room.code)).emit('vote:state', session.voteState());
+        }
+      } catch (error) {
+        if (!(error instanceof VoteError)) throw error;
+        socket.emit('vote:error', { code: error.code, message: error.message } satisfies VoteErrorPayload);
+      }
+    }
+    socket.on('vote:open', (request: VoteRequest) => voteCommand(request, true));
+    socket.on('vote:cast', (request: VoteCastRequest) => voteCommand(request, false));
 
     socket.on('disconnect', () => {
       const left = registry.leaveBySocket(socket.id);

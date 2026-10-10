@@ -148,8 +148,10 @@ the mutation restored a passing test. No mutation is committed.
 
 ## Follow-ups
 
-Connect anonymous voting (item 9), including a tie policy, trusted round results
-and new-round generation. Decide how to resolve a pending trade when its recipient
+Anonymous voting (item 9) is wired after plating; see the Votes rules in
+`docs/DESIGN.md`. Shared ties are final vote results, never invented chef wins.
+Trusted match scoring and new-round generation remain follow-ups. Decide how to
+resolve a pending trade when its recipient
 disconnects, host reconnect/transfer, and whether opening turns should alternate
 or twist ownership should be constrained. Wire public-state replay for late joiners;
 host seating remains item 14.

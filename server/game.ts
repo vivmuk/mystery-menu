@@ -3,6 +3,8 @@ import { deckById } from './ingredients/deck.ts';
 import { generateHands } from './ingredients/generate.ts';
 import type { RoomRegistry } from './rooms.ts';
 import type { VeniceClient } from './venice/client.ts';
+import { createVote, reduceVote, publicVoteState, VoteError, type VoteState, type VoteSeat, type PublicVoteState } from './votes.ts';
+import type { Chef } from './draft/engine.ts';
 
 /** Only transport-supported actions; a caller cannot supply time or hands. */
 export type GameAction = {
@@ -19,6 +21,7 @@ export class GameSession {
   #hands: DraftHands | null = null;
   #generating = false;
   #state: DraftState | null = null;
+  #vote: VoteState | null = null;
   #timer: ReturnType<typeof setTimeout> | null = null;
   #disposed = false;
 
@@ -33,6 +36,7 @@ export class GameSession {
     if (this.#timer !== null) clearTimeout(this.#timer);
     this.#timer = null;
     this.#state = null;
+    this.#vote = null;
     this.#hands = null;
   }
 
@@ -68,6 +72,26 @@ export class GameSession {
     return this.#state ? publicState(this.#state) : null;
   }
 
+  /** Uses only finished public plates; secret queues never enter voting. */
+  prepareVote(names: Record<Chef, string>): PublicVoteState | null {
+    if (this.#state?.public.phase !== 'plating' || this.#state.public.pendingTrade) return null;
+    if (!this.#vote || this.#vote.tally.phase === 'waiting') this.#vote = createVote(publicState(this.#state), names);
+    return this.voteState();
+  }
+
+  voteState(): PublicVoteState | null { return this.#vote ? publicVoteState(this.#vote) : null; }
+
+  openVote(seats: VoteSeat[]): void {
+    if (!this.#vote || this.#state?.public.phase !== 'plating' || this.#state.public.pendingTrade) throw new VoteError('wrong-phase', 'Finish the draft and any trade before opening voting.');
+    this.#vote = reduceVote(this.#vote, { type: 'open', seats });
+  }
+
+  castVote(voter: string, dish: Chef): boolean {
+    if (!this.#vote) throw new VoteError('wrong-phase', 'Finish the draft before voting.');
+    this.#vote = reduceVote(this.#vote, { type: 'cast', voter, dish });
+    return this.#vote.tally.phase === 'closed';
+  }
+
   start(): void {
     if (this.#disposed || this.#state || this.#generating || !this.#hands) {
       throw new DraftError('wrong-phase', 'Prepare hands before starting a new draft.');
@@ -78,6 +102,7 @@ export class GameSession {
 
   act(action: GameAction): void {
     if (!this.#state) throw new DraftError('wrong-phase', 'Start the draft first.');
+    if (this.#vote && this.#vote.tally.phase !== 'waiting') throw new DraftError('wrong-phase', 'The dishes are locked for voting.');
     this.#state = reduce(this.#state, { ...action, now: this.now() });
     this.schedule();
   }

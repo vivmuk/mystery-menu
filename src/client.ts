@@ -3,12 +3,19 @@ import { io, type Socket } from 'socket.io-client';
 
 import type { RoomStatePayload as RoomState, PlayerRole } from '../server/rooms.ts';
 import type { Chef, PublicDraftState } from '../server/draft/engine.ts';
-import type { DraftErrorPayload } from '../server/protocol.ts';
+import type { DraftErrorPayload, VoteErrorPayload } from '../server/protocol.ts';
+import type { PublicVoteState } from '../server/votes.ts';
+import { mountVote } from './vote.ts';
 import { mountAuction } from './auction.ts';
 
 let roomCode: string | null = null;
 let roomState: RoomState | null = null;
 let draftState: PublicDraftState | null = null;
+let voteState: PublicVoteState | null = null;
+let voteLocked = false;
+let votePending = false;
+let voteError: string | null = null;
+let voteEligible = false;
 let playerList: HTMLUListElement | null = null;
 let hostSocket: string | null = null;
 const seatSockets: Record<Chef, string | null> = { chefOne: null, chefTwo: null };
@@ -317,6 +324,7 @@ function showDraftError(message: string): void {
 }
 
 function renderAuction(newReveal = false, newAward = false): void {
+  if (voteState) { renderVote(); return; }
   if (!draftState || !roomCode) return;
   document.querySelector('.stage')?.classList.add('stage--auction');
   const names = { chefOne: 'Chef One', chefTwo: 'Chef Two' };
@@ -327,6 +335,16 @@ function renderAuction(newReveal = false, newAward = false): void {
     code: roomCode, chef: myChef(), names, host: hostSocket === socket.id,
     connected: socket.connected, newReveal, newAward,
     send: (event, payload) => socket.emit(event, payload),
+  });
+}
+
+function renderVote(): void {
+  if (!voteState || !roomCode) return;
+  document.querySelector('.stage')?.classList.add('stage--auction');
+  mountVote(clearScreen(), voteState, {
+    code: roomCode, host: hostSocket === socket.id, eligible: voteEligible,
+    connected: socket.connected, locked: voteLocked, pending: votePending, error: voteError,
+    send: (event, payload) => { votePending = true; voteError = null; socket.emit(event, payload); },
   });
 }
 
@@ -442,6 +460,29 @@ socket.on('draft:state', (state: PublicDraftState) => {
   const item = state.auction?.item ?? state.lastAward?.item;
   const oldItem = previous?.auction?.item ?? previous?.lastAward?.item;
   renderAuction(item?.slot !== oldItem?.slot, state.lastAward?.item.slot !== previous?.lastAward?.item.slot);
+});
+
+socket.on('vote:state', (state: PublicVoteState) => {
+  // Freeze eligibility at opening, matching the server's private seat snapshot.
+  if (!voteState || voteState.tally.phase === 'waiting') {
+    const self = roomState?.players.find(player => player.id === socket.id);
+    const tableExists = roomState?.players.some(player => player.role === 'table');
+    voteEligible = !!self && (tableExists ? self.role === 'table' : self.role === 'chef');
+  }
+  voteState = state;
+  votePending = false;
+  voteError = null;
+  renderVote();
+  setStatus(`Room ${roomCode} · ${state.tally.phase === 'closed' ? 'The table has decided.' : 'Anonymous best-dish vote.'}`);
+});
+
+socket.on('vote:accepted', () => {
+  voteLocked = true; votePending = false; voteError = null; renderVote();
+});
+socket.on('vote:error', (error: VoteErrorPayload) => {
+  votePending = false; voteError = error.message;
+  if (error.code === 'already-voted') voteLocked = true;
+  renderVote(); setStatus(error.message);
 });
 
 socket.on('draft:error', (error: DraftErrorPayload) => {
