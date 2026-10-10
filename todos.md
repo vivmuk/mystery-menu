@@ -11,7 +11,7 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 2. [x] Room + barcode join: create a room with a 4-letter code, render a QR code, let players join with name and colour, no accounts or passwords anywhere ~medium #join
 3. [x] Venice service layer: server-side-only client for text, image and TTS using the key from the environment, with timeouts, retries and a /api/venice/health probe ~medium #venice
 4. [x] Ingredient generation: from a deck, a vegetarian-only filter and one cross-cuisine twist, generate 5 ingredients per chef as strict validated JSON ~large #gameplay
-5. [ ] Ingredient art library: a build script that renders the curated canonical ingredient set with a fast image model and caches them as static files ~medium #art
+5. [x] Ingredient art library: a build script that renders the curated canonical ingredient set with a fast image model and caches them as static files ~medium #art — landed with the Muse model (`muse-image`, ~$0.02/tile): 75 tiles generated from the deck itself and committed under `public/art/`, served at `/art/<ingredient-id>.webp` and shown on the reveal plate and in the dish slots. `venice-sd35` was rejected for drawing fior di latte as a yellow block; `nano-banana-pro` passed but cost 5x.
 6. [ ] Live art for the cross-cuisine twist ingredient using a premium image model, cached by ingredient name so a repeat never regenerates ~medium #art
 7. [x] Draft engine: 10 items, 5 per chef, 10 coins, ascending bids with a 10 second shot clock, Take It concede, forced free take when a chef is broke, single gift or trade per round ~large #gameplay
 8. [ ] AI referee avatar: a 3D Three.js character that announces each ingredient with a Venice TTS voice and real lip sync driven by the audio ~large #avatar

@@ -6,7 +6,7 @@ import type { Chef, PublicDraftState } from '../server/draft/engine.ts';
 import type { DraftErrorPayload, VoteErrorPayload } from '../server/protocol.ts';
 import type { PublicVoteState } from '../server/votes.ts';
 import { mountVote } from './vote.ts';
-import { mountAuction } from './auction.ts';
+import { mountAuction, renderPlatedDishes } from './auction.ts';
 
 let roomCode: string | null = null;
 let roomState: RoomState | null = null;
@@ -341,7 +341,18 @@ function renderAuction(newReveal = false, newAward = false): void {
 function renderVote(): void {
   if (!voteState || !roomCode) return;
   document.querySelector('.stage')?.classList.add('stage--auction');
-  mountVote(clearScreen(), voteState, {
+  const root = clearScreen();
+  // Show the finished plates above the ballot. The auction view never gets to
+  // render them: the vote state lands in the same broadcast as the end of the
+  // draft, so the plates would otherwise never be seen at all.
+  if (draftState) {
+    const names: Record<Chef, string> = { chefOne: 'Chef One', chefTwo: 'Chef Two' };
+    for (const chef of ['chefOne', 'chefTwo'] as const) {
+      names[chef] = roomState?.players.find((player) => player.id === seatSockets[chef])?.name ?? names[chef];
+    }
+    root.append(renderPlatedDishes(draftState, names));
+  }
+  mountVote(root, voteState, {
     code: roomCode, host: hostSocket === socket.id, eligible: voteEligible,
     connected: socket.connected, locked: voteLocked, pending: votePending, error: voteError,
     send: (event, payload) => { votePending = true; voteError = null; socket.emit(event, payload); },

@@ -20,6 +20,52 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
   return node;
 }
 
+/**
+ * The two dishes, plated: five bought ingredients around the rim at 72° apart,
+ * with the cross-cuisine twist badged in the middle.
+ *
+ * This lives here but is mounted by the vote screen, because the vote state
+ * arrives in the same broadcast as the end of the draft: the auction view is
+ * replaced before it can ever show a finished plate. The plates are the
+ * subject of the vote, so the vote screen is where they belong anyway.
+ */
+export function renderPlatedDishes(state: PublicDraftState, names: Record<Chef, string>): HTMLElement {
+  const stage = el('section', 'stage-plates');
+  stage.append(el('h3', '', 'The dishes, plated'));
+  const grid = el('div', 'stage-plates__grid');
+  for (const chef of ['chefOne', 'chefTwo'] as const) {
+    const items = state.chefs[chef].items;
+    const card = el('section', `stage-plate stage-plate--${chef}`);
+    card.append(el('h4', '', `${names[chef]}’s dish`));
+    const plate = el('div', 'stage-plate__plate');
+    plate.setAttribute('aria-hidden', 'true');
+    items.forEach((item, index) => {
+      const tile = document.createElement('img');
+      tile.className = 'stage-plate__item';
+      tile.alt = '';
+      tile.decoding = 'async';
+      tile.style.setProperty('--i', String(index));
+      tile.addEventListener('error', () => tile.remove(), { once: true });
+      tile.src = `/art/${encodeURIComponent(item.ingredient.id)}.webp`;
+      plate.append(tile);
+    });
+    if (!items.length) plate.append(el('span', 'stage-plate__empty', 'nothing plated'));
+    // The last two slots of a round are the twists; `slot` is `<round>:<index>`.
+    const twists = items.filter((item) => Number(item.slot.split(':')[1] ?? '0') >= 8).length;
+    if (twists) {
+      plate.append(el('span', 'stage-plate__twist', twists > 1 ? '2 cross-cuisine twists' : 'cross-cuisine twist'));
+    }
+    plate.append(el('span', 'stage-plate__count', `${items.length} / 5`));
+    card.append(plate);
+    const list = el('ul', 'stage-plate__list');
+    for (const item of items) list.append(el('li', '', item.ingredient.name));
+    if (items.length) card.append(list);
+    grid.append(card);
+  }
+  stage.append(grid);
+  return stage;
+}
+
 /** All ingredient, purse, plate and bid data comes from this public snapshot. */
 export function mountAuction(root: HTMLElement, state: PublicDraftState, context: AuctionContext): () => void {
   const screen = el('section', 'auction-screen');
@@ -171,6 +217,14 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
       submit('draft:reveal', { code: context.code });
     });
     screen.append(reveal);
+  }
+
+  // Once the draft is over the plates are the whole story, so they get the
+  // stage: the five bought ingredients arranged around the rim of a plate,
+  // with the cross-cuisine twist called out in the middle. This is the moment
+  // the game is actually about.
+  if (state.phase !== 'reveal' && state.phase !== 'auction') {
+    screen.append(renderPlatedDishes(state, context.names));
   }
 
   const dishes = el('section', 'dishes');
