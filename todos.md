@@ -19,3 +19,5 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 10. [ ] 3D kitchen staging: full Three.js scene, dishes assembling from the drafted ingredients, tasteful art direction at 60fps on a mid-range phone ~large #art
 11. [ ] PWA polish: install prompt, offline shell, haptics, sound design, reduced-motion fallbacks ~medium #polish
 12. [ ] Deploy to Railway: single service, environment variables, healthcheck, public URL ready for a party ~small #deploy
+13. [ ] Triage the npm audit findings deliberately: fix what is reachable, pin or document what is dev-only. Do not run `npm audit fix --force` ~small #security
+14. [ ] Host seating: decide whether the host occupies seat 1 as a chef or spectates. Today the host is seat 1 and is therefore always a chef, which surprises a host who only wanted to run the room ~small #gameplay
