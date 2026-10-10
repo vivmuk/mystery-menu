@@ -19,6 +19,12 @@ const ORIGINAL_ENV = { ...process.env };
 
 beforeEach(() => {
   process.env = { ...ORIGINAL_ENV, VENICE_API_KEY: SENTINEL_KEY };
+  // This suite asserts the documented defaults, so ambient overrides must not leak
+  // in: Railway sets VENICE_TEXT_MODEL as a service variable, which made these
+  // tests pass locally and fail in the build.
+  delete process.env.VENICE_TEXT_MODEL;
+  delete process.env.VENICE_IMAGE_MODEL;
+  delete process.env.VENICE_TTS_MODEL;
 });
 
 afterEach(() => {
