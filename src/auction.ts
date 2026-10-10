@@ -184,7 +184,28 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
     dish.append(name, el('p', 'dish__count', `${items.length} / 5 ingredients`));
     const slots = el('div', 'dish__slots');
     slots.setAttribute('aria-hidden', 'true');
-    for (let i = 0; i < 5; i++) slots.append(el('span', i < items.length ? 'dish__slot dish__slot--filled' : 'dish__slot', i < items.length ? '●' : ''));
+    for (let i = 0; i < 5; i++) {
+      const filled = i < items.length;
+      const slot = el('span', filled ? 'dish__slot dish__slot--filled' : 'dish__slot');
+      const item = items[i];
+      // A won ingredient shows what it actually is. The plate filling with real
+      // pictures is the whole point of buying them, and it is readable across a
+      // table, which a coloured dot is not.
+      if (filled && item && item.ingredient.id) {
+        const art = document.createElement('img');
+        art.className = 'dish__slot-art';
+        art.alt = '';
+        art.decoding = 'async';
+        art.loading = 'lazy';
+        art.addEventListener('error', () => art.remove(), { once: true });
+        art.src = `/art/${encodeURIComponent(item.ingredient.id)}.webp`;
+        slot.append(art);
+        if (item.ingredient.name) slot.title = item.ingredient.name;
+      } else if (filled) {
+        slot.append(document.createTextNode('●'));
+      }
+      slots.append(slot);
+    }
     dish.append(slots);
     const list = el('ul', 'dish__items');
     for (const item of items) {

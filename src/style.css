@@ -737,7 +737,14 @@ select:focus-visible,
 .dish h4 { color: var(--ink); }
 .dish__count { color: var(--muted); }
 .dish__slot { border: 1px dashed rgba(246, 242, 255, 0.3); color: var(--muted); }
-.dish__slot--filled { background: var(--chef); color: transparent; box-shadow: 0 0 12px -2px var(--chef); }
+.dish__slot--filled {
+  background: var(--chef);
+  color: transparent;
+  box-shadow: 0 0 12px -2px var(--chef);
+  padding: 0;
+  overflow: hidden;
+}
+.dish__slot-art { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
 .dish__items li { border-top: 1px solid var(--line); color: var(--ink); }
 .dish__empty { color: var(--muted); }
 
@@ -965,13 +972,19 @@ select option { background: var(--panel-solid); color: var(--ink); }
 
 /* The three raises are the real controls of this game: make them lit. */
 .bid-raise {
-  background: linear-gradient(180deg, rgba(53, 167, 255, 0.42), rgba(53, 167, 255, 0.18));
-  border: 1px solid rgba(130, 205, 255, 0.8);
-  box-shadow: 0 0 24px -8px rgba(53, 167, 255, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(53, 167, 255, 0.62), rgba(53, 167, 255, 0.3));
+  border: 1px solid rgba(150, 215, 255, 0.9);
+  box-shadow: 0 0 26px -6px rgba(53, 167, 255, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 20, 40, 0.6);
 }
 
-.bid-raise span { color: #cdeaff; }
+.bid-raise span { color: #eaf7ff; }
+
+/* The status line that explains why you cannot act was the faintest text on
+ * the screen. */
+.bid-owner { color: #e6dcff; font-weight: 700; }
+.standing-bid { color: #e6dcff; }
 
 @media (hover: hover) {
   .bid-raise:not(:disabled):hover {
