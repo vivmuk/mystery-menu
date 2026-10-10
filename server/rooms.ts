@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import type { Chef } from './draft/engine.ts';
 
 /** A dinner table, not a stadium: two chefs plus the table that votes. */
 export const ROOM_CAPACITY = 12;
@@ -45,23 +46,46 @@ function normalizeCode(code: string): string {
   return code.trim().toUpperCase();
 }
 
-/** The first two seats at the table are the chefs; everyone else votes. */
-function roleForSeat(seat: number): PlayerRole {
-  return seat < 2 ? 'chef' : 'table';
-}
-
 /**
  * Rooms live in memory and die with the process — there is no database to
  * leak, and a party room dies with the evening.
  */
 export class RoomRegistry {
   private readonly rooms = new Map<string, Room>();
+  private readonly seats = new Map<string, { host: string | null; chefOne: string | null; chefTwo: string | null }>();
+
+  private readonly deletionListeners = new Set<(code: string) => void>();
+
+  onDelete(listener: (code: string) => void): void {
+    this.deletionListeners.add(listener);
+  }
+
+  delete(code: string): boolean {
+    const room = this.get(code);
+    if (!room) return false;
+    this.rooms.delete(room.code);
+    this.seats.delete(room.code);
+    for (const listener of this.deletionListeners) listener(room.code);
+    return true;
+  }
+
+  isHost(room: Room, socketId: string): boolean {
+    return this.seats.get(room.code)?.host === socketId && room.players.some((player) => player.id === socketId);
+  }
+
+  chefForSocket(room: Room, socketId: string): Chef | null {
+    const seats = this.seats.get(room.code);
+    if (seats?.chefOne === socketId) return 'chefOne';
+    if (seats?.chefTwo === socketId) return 'chefTwo';
+    return null;
+  }
 
   create(): Room {
     let code = generateCode();
     while (this.rooms.has(code)) code = generateCode();
     const room: Room = { code, createdAt: Date.now(), players: [] };
     this.rooms.set(code, room);
+    this.seats.set(code, { host: null, chefOne: null, chefTwo: null });
     return room;
   }
 
@@ -80,7 +104,7 @@ export class RoomRegistry {
     if (!colour || colour.length > MAX_COLOUR_LENGTH) {
       return { ok: false, error: 'Pick a colour to sit down.' };
     }
-    if (room.players.some((p) => p.id === socketId)) {
+    if (Array.from(this.rooms.values()).some((open) => open.players.some((player) => player.id === socketId))) {
       return { ok: false, error: 'You are already seated in this room.' };
     }
     if (room.players.length >= ROOM_CAPACITY) {
@@ -89,7 +113,11 @@ export class RoomRegistry {
     if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
       return { ok: false, error: `Someone is already seated as “${name}”. Pick another name.` };
     }
-    const player: Player = { id: socketId, name, colour, role: roleForSeat(room.players.length) };
+    const seats = this.seats.get(room.code)!;
+    const chef = seats.chefOne === null ? 'chefOne' : seats.chefTwo === null ? 'chefTwo' : null;
+    const player: Player = { id: socketId, name, colour, role: chef ? 'chef' : 'table' };
+    if (chef) seats[chef] = socketId;
+    if (seats.host === null && room.players.length === 0) seats.host = socketId;
     room.players.push(player);
     return { ok: true, player };
   }
@@ -99,6 +127,10 @@ export class RoomRegistry {
       const index = room.players.findIndex((p) => p.id === socketId);
       if (index === -1) continue;
       const [player] = room.players.splice(index, 1);
+      const seats = this.seats.get(room.code)!;
+      if (seats.chefOne === socketId) seats.chefOne = null;
+      if (seats.chefTwo === socketId) seats.chefTwo = null;
+      if (room.players.length === 0) this.delete(room.code);
       return player ? { room, player } : undefined;
     }
     return undefined;

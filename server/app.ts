@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import express, { type Express } from 'express';
 import { RoomRegistry } from './rooms.ts';
+import { GameSessions } from './game.ts';
+import { DraftError } from './draft/engine.ts';
 import { createVeniceClient, veniceConfig, type VeniceClient } from './venice/client.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -18,6 +20,7 @@ export function clientDir(): string {
 export function createApp(
   registry: RoomRegistry = new RoomRegistry(),
   venice: VeniceClient = createVeniceClient(),
+  games: GameSessions = new GameSessions(registry),
 ): Express {
   const app = express();
   app.disable('x-powered-by');
@@ -65,6 +68,34 @@ export function createApp(
   app.post('/api/rooms', (_req, res) => {
     const room = registry.create();
     res.status(201).json({ code: room.code });
+  });
+
+  app.post('/api/rooms/:code/hands', async (req, res) => {
+    const room = registry.get(req.params.code ?? '');
+    if (!room) {
+      res.status(404).json({ ok: false, code: 'wrong-phase', message: 'This room is not open.' });
+      return;
+    }
+    const body: unknown = req.body;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId and optional vegetarianOnly boolean.' });
+      return;
+    }
+    const { deckId, vegetarianOnly = false } = body as { deckId?: unknown; vegetarianOnly?: unknown };
+    if (typeof deckId !== 'string' || typeof vegetarianOnly !== 'boolean') {
+      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId and optional vegetarianOnly boolean.' });
+      return;
+    }
+    try {
+      res.json(await games.generate(room.code, deckId, vegetarianOnly, venice));
+    } catch (error) {
+      // Never echo generator errors: their messages can include dealt content.
+      if (error instanceof DraftError) {
+        res.status(error.code === 'invalid-action' ? 400 : 409).json({ ok: false, code: error.code, message: error.message });
+      } else {
+        res.status(503).json({ ok: false, code: 'invalid-hands', message: 'Could not prepare hands. Try again.' });
+      }
+    }
   });
 
   app.get('/api/rooms/:code', (req, res) => {

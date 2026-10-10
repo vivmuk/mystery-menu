@@ -72,10 +72,84 @@ can put both twists into the same final dish. The engine preserves free bidding
 and reveals both twists last; guaranteeing one twist per final dish would need
 an additional auction restriction not stated in the locked rules.
 
+## Room integration (items 15–16)
+
+`server/game.ts` owns a `GameSession` per canonical room code. Dealt hands and
+`DraftState` are private fields; the only state accessor is `publicState()`,
+which delegates to the engine's detached public projection. Starting consumes
+stored hands into the engine. The room itself and `room:state` never hold hands.
+The engine and its public surface remain unchanged.
+
+### Setup receipt
+
+`POST /api/rooms/:code/hands` accepts `{ deckId, vegetarianOnly?: boolean }`.
+It calls the existing server-side `generateHands`, using Venice with its validated
+fallback. Success returns **only** `{ ok: true, vegetarianOnly }`: no ids, names,
+hands, or counts derived from content. Unknown rooms return 404, fewer than two
+seated chefs return 409, and malformed options/unknown decks return 400.
+Generation is serialized per session; in-flight generation and an active draft
+refuse a redeal. Generation failures use a generic message, never a model or hand
+validation message. Deleted sessions cannot be resurrected by late generation.
+This setup route is currently room-code scoped, not socket-authenticated; host-only
+HTTP setup authorization and abuse/rate limits are follow-ups.
+
+### Wire protocol and authority
+
+Every request carries `code`. Chef requests also carry `chef` (`chefOne` or
+`chefTwo`); the server verifies it against the seat owned by the sending socket.
+No wire request is trusted to supply a time, deadline, hands or timeout action.
+
+| Event | Additional request fields | Authority |
+|---|---|---|
+| `draft:start` | none | Room host only; requires stored hands and two chefs |
+| `draft:reveal` | none | Room host only |
+| `draft:bid` | `chef`, `amount` | Socket owning that chef seat |
+| `draft:take-it` | `chef` | Socket owning that chef seat |
+| `draft:gift` | `chef`, `slot` | Socket owning that chef seat |
+| `draft:trade` | `chef`, `give`, `receive` | Socket owning that chef seat |
+| `draft:respond-trade` | `chef`, `accept` | Socket owning that chef seat; engine requires the recipient |
+
+For now **host-is-referee**: the first joined socket is the host and also
+`chefOne`, preserving the existing lobby seating until item 14 is decided.
+The second chef cannot start/reveal; table and unseated sockets cannot perform
+chef actions. Seat identities do not shift when another player disconnects.
+A new occupant may fill a vacant chef seat, but does not inherit host authority.
+A socket may sit in only one room. Host reconnection/authority transfer is not
+implemented; a disconnected host cannot be impersonated by the next player.
+
+Accepted actions broadcast `draft:state` to that room only, containing exactly
+the engine's `publicState()`. Refusals send only the sender `draft:error` with
+`{ code, message }`; engine codes/messages are preserved, authorization uses
+`invalid-action` (host) / `invalid-chef` (seat), and missing setup uses `wrong-phase`.
+Handlers reduce synchronously; async generation is locked until complete.
+
+### Server clock and deletion
+
+A reveal or accepted bid schedules `setTimeout` for the engine deadline. The
+session clears/replaces the previous timer after each accepted transition.
+Its callback checks timer identity, current slot, turn and deadline, then reduces
+`timeout` with the **current** state's slot/turn/deadline and a server clock reading.
+Clock readings are clamped non-decreasing if the wall clock moves backwards;
+early callbacks reschedule. Clients cannot forge an expiry or extend a turn.
+The resulting award is projected and broadcast just like a player transition.
+RoomRegistry deletion disposes all private state and timers; the last departure
+also deletes its room. HTTP server shutdown disposes all sessions' timers.
+
+### Secrecy verification
+
+Real-socket coverage captures every emitted event on both chefs throughout setup,
+a full ten-item round, refusals and disconnects, plus the HTTP hands receipt.
+A deterministic **real generator** deal uses ten distinct ids/names to prevent
+shared catalog copies from masking a leak. The walker checks keys, string values
+and serialized JSON against each not-yet-announced ingredient at that event.
+Mutation verification temporarily included the private queue in `publicState()`:
+the test failed on `draft:state before reveal 0` containing `pizza-dough`. Removing
+the mutation restored a passing test. No mutation is committed.
+
 ## Follow-ups
 
-Wire the engine into a server-owned room lifecycle with authorized reveals,
-serialized action dispatch, server-supplied clock readings and expiry callbacks
-(backlog items 15–16). Connect anonymous voting (item 9), including a tie policy.
-Decide how to resolve a pending trade when its recipient disconnects, and whether
-opening turns should alternate or twist ownership should be constrained.
+Connect anonymous voting (item 9), including a tie policy, trusted round results
+and new-round generation. Decide how to resolve a pending trade when its recipient
+disconnects, host reconnect/transfer, and whether opening turns should alternate
+or twist ownership should be constrained. Wire public-state replay for late joiners
+and the mobile auction UI (item 17); host seating remains item 14.
