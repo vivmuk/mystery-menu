@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import express, { type Express } from 'express';
 import { RoomRegistry } from './rooms.ts';
+import { createVeniceClient, veniceConfig, type VeniceClient } from './venice/client.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,13 +15,46 @@ export function clientDir(): string {
   return process.env.CLIENT_DIR ?? path.resolve(here, '..', 'dist', 'client');
 }
 
-export function createApp(registry: RoomRegistry = new RoomRegistry()): Express {
+export function createApp(
+  registry: RoomRegistry = new RoomRegistry(),
+  venice: VeniceClient = createVeniceClient(),
+): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json());
 
   app.get('/healthz', (_req, res) => {
     res.json({ ok: true, service: 'mystery-menu', ts: new Date().toISOString() });
+  });
+
+  /**
+   * Is Venice usable right now? One cheap text call answers it. Returns 503
+   * when the key is missing or Venice is unreachable — the service is
+   * degraded, not the request malformed. The key never leaves this process.
+   */
+  app.get('/api/venice/health', async (_req, res) => {
+    const config = veniceConfig();
+    try {
+      const result = await venice.health();
+      const status = result.ok ? 200 : 503;
+      res.status(status).json({
+        ok: result.ok,
+        textModel: config.textModel,
+        imageModel: config.imageModel,
+        ttsModel: config.ttsModel,
+        reachable: result.reachable,
+      });
+    } catch {
+      // A health probe must never 500 — an unexpected client error still
+      // means "Venice is not usable", which is a 503.
+      res.status(503).json({
+        ok: false,
+        textModel: config.textModel,
+        imageModel: config.imageModel,
+        ttsModel: config.ttsModel,
+        reachable: false,
+      });
+    }
   });
 
   app.post('/api/rooms', (_req, res) => {
