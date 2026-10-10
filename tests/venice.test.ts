@@ -356,27 +356,26 @@ describe('/api/venice/health', () => {
 
 describe('VeniceClient.health', () => {
   /**
-   * A fetch stub that answers the model list and the completion separately. Both are
-   * THUNKS: a fresh Response per call. Cloning one shared Response hangs, because
+   * A fetch stub that answers each Venice catalogue separately from the completion.
+   * Responses are built fresh per call — cloning one shared Response hangs, because
    * cancelling a cloned body never settles in undici.
    */
+  const HEALTHY_CATALOGUE: Record<string, string[]> = {
+    text: ['z-ai-glm-5-3-flash'],
+    image: ['venice-sd35'],
+    tts: ['tts-elevenlabs-turbo-v2-5'],
+  };
+
   function mocks(
     completion: () => Response,
-    // Default: a healthy catalogue that advertises everything we configure, so the
-    // tests that are not about model availability do not trip over it.
-    models: (() => Response) | 'throw' = () =>
-      jsonResponse({
-        data: [
-          { id: 'z-ai-glm-5-3-flash' },
-          { id: 'venice-sd35' },
-          { id: 'tts-elevenlabs-turbo-v2-5' },
-        ],
-      }),
+    catalogue: Record<string, string[]> | 'throw' = HEALTHY_CATALOGUE,
   ) {
     return vi.fn<VeniceFetch>(async (input) => {
-      if (String(input).includes('/api/v1/models')) {
-        if (models === 'throw') throw new TypeError('fetch failed');
-        return models();
+      const url = String(input);
+      if (url.includes('/api/v1/models')) {
+        if (catalogue === 'throw') throw new TypeError('fetch failed');
+        const type = new URL(url).searchParams.get('type') ?? 'text';
+        return jsonResponse({ data: (catalogue[type] ?? []).map((id) => ({ id })) });
       }
       return completion();
     });
@@ -416,7 +415,7 @@ describe('VeniceClient.health', () => {
   it('names a configured model that Venice does not advertise, and stays ok', async () => {
     const fetchMock = mocks(
       () => jsonResponse({ choices: [{ message: { content: 'pong' } }] }),
-      () => jsonResponse({ data: [{ id: 'z-ai-glm-5-3-flash' }, { id: 'venice-sd35' }] }),
+      { text: ['z-ai-glm-5-3-flash'], image: ['venice-sd35'], tts: [] },
     );
     const client = createVeniceClient(fetchMock);
 

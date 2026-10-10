@@ -174,18 +174,25 @@ function isAbortError(err: unknown): boolean {
   );
 }
 
+/** Venice's catalogue query values. Note `tts`, while the capability is `speech`. */
+export type VeniceCatalogueType = 'text' | 'image' | 'tts';
+
 /**
- * The model ids Venice advertises, or `undefined` if the list cannot be read.
- * Best-effort by design: it answers "is a configured model id real?", which is a
- * config check, not a reachability check — so it never fails a health probe.
+ * The model ids Venice advertises for one capability, or `undefined` if the list
+ * cannot be read. Best-effort by design: it answers "is a configured model id real?",
+ * which is a config check, not a reachability check — so it never fails a health probe.
+ *
+ * The catalogue is per-type: `/api/v1/models` with no query returns TEXT models only,
+ * so image and TTS ids must be looked up with their own `?type=`.
  */
 async function listModelIds(
+  type: VeniceCatalogueType,
   fetchImpl: VeniceFetch,
   timeoutMs: number,
 ): Promise<string[] | undefined> {
   try {
     const key = readApiKey('text');
-    const response = await fetchImpl(`${VENICE_BASE_URL}/api/v1/models`, {
+    const response = await fetchImpl(`${VENICE_BASE_URL}/api/v1/models?type=${type}`, {
       method: 'GET',
       headers: { authorization: `Bearer ${key}` },
       signal: AbortSignal.timeout(timeoutMs),
@@ -368,13 +375,18 @@ export function createVeniceClient(fetchImpl: VeniceFetch = fetch): VeniceClient
         await response.arrayBuffer().catch(() => undefined);
 
         // Best-effort: a typo'd model id should surface to an operator, not to a
-        // party mid-game. A failure to read the list never fails the check.
-        const advertised = await listModelIds(fetchImpl, timeoutMs);
-        const missingModels = advertised
-          ? [config.textModel, config.imageModel, config.ttsModel].filter(
-              (id) => !advertised.includes(id),
-            )
-          : [];
+        // party mid-game. A failure to read a catalogue never fails the check, and
+        // each capability is checked against ITS OWN catalogue.
+        const [textIds, imageIds, ttsIds] = await Promise.all([
+          listModelIds('text', fetchImpl, timeoutMs),
+          listModelIds('image', fetchImpl, timeoutMs),
+          listModelIds('tts', fetchImpl, timeoutMs),
+        ]);
+        const missingModels = [
+          ...(textIds && !textIds.includes(config.textModel) ? [config.textModel] : []),
+          ...(imageIds && !imageIds.includes(config.imageModel) ? [config.imageModel] : []),
+          ...(ttsIds && !ttsIds.includes(config.ttsModel) ? [config.ttsModel] : []),
+        ];
 
         return {
           ...base,
