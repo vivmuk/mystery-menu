@@ -1,0 +1,605 @@
+{
+ "model": "muse-image",
+ "tiles": [
+  {
+   "id": "pizza-dough",
+   "name": "Pizza dough",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "pizza-dough.webp"
+  },
+  {
+   "id": "san-marzano-tomatoes",
+   "name": "San Marzano tomatoes",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "san-marzano-tomatoes.webp"
+  },
+  {
+   "id": "fior-di-latte",
+   "name": "Fior di latte mozzarella",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "fior-di-latte.webp"
+  },
+  {
+   "id": "fresh-basil",
+   "name": "Fresh basil",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "fresh-basil.webp"
+  },
+  {
+   "id": "extra-virgin-olive-oil",
+   "name": "Extra-virgin olive oil",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "extra-virgin-olive-oil.webp"
+  },
+  {
+   "id": "garlic",
+   "name": "Garlic",
+   "origin": "mediterranean",
+   "vegetarian": true,
+   "twist": false,
+   "file": "garlic.webp"
+  },
+  {
+   "id": "dried-oregano",
+   "name": "Dried oregano",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "dried-oregano.webp"
+  },
+  {
+   "id": "cherry-tomatoes",
+   "name": "Cherry tomatoes",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cherry-tomatoes.webp"
+  },
+  {
+   "id": "cremini-mushrooms",
+   "name": "Cremini mushrooms",
+   "origin": "french",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cremini-mushrooms.webp"
+  },
+  {
+   "id": "red-onion",
+   "name": "Red onion",
+   "origin": "mediterranean",
+   "vegetarian": true,
+   "twist": false,
+   "file": "red-onion.webp"
+  },
+  {
+   "id": "taggiasca-olives",
+   "name": "Taggiasca olives",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "taggiasca-olives.webp"
+  },
+  {
+   "id": "artichoke-hearts",
+   "name": "Artichoke hearts",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "artichoke-hearts.webp"
+  },
+  {
+   "id": "smoked-scamorza",
+   "name": "Smoked scamorza",
+   "origin": "italian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "smoked-scamorza.webp"
+  },
+  {
+   "id": "hot-salami",
+   "name": "Calabrian hot salami",
+   "origin": "italian",
+   "vegetarian": false,
+   "twist": false,
+   "file": "hot-salami.webp"
+  },
+  {
+   "id": "prosciutto",
+   "name": "Prosciutto di Parma",
+   "origin": "italian",
+   "vegetarian": false,
+   "twist": false,
+   "file": "prosciutto.webp"
+  },
+  {
+   "id": "anchovies",
+   "name": "Anchovies",
+   "origin": "italian",
+   "vegetarian": false,
+   "twist": false,
+   "file": "anchovies.webp"
+  },
+  {
+   "id": "douchi",
+   "name": "Fermented black beans",
+   "origin": "chinese",
+   "vegetarian": true,
+   "twist": true,
+   "file": "douchi.webp"
+  },
+  {
+   "id": "gochujang",
+   "name": "Gochujang",
+   "origin": "korean",
+   "vegetarian": true,
+   "twist": true,
+   "file": "gochujang.webp"
+  },
+  {
+   "id": "miso-paste",
+   "name": "Miso paste",
+   "origin": "japanese",
+   "vegetarian": true,
+   "twist": true,
+   "file": "miso-paste.webp"
+  },
+  {
+   "id": "doubanjiang",
+   "name": "Doubanjiang",
+   "origin": "sichuan",
+   "vegetarian": true,
+   "twist": true,
+   "file": "doubanjiang.webp"
+  },
+  {
+   "id": "harissa",
+   "name": "Harissa",
+   "origin": "north-african",
+   "vegetarian": true,
+   "twist": true,
+   "file": "harissa.webp"
+  },
+  {
+   "id": "preserved-lemon",
+   "name": "Preserved lemon",
+   "origin": "north-african",
+   "vegetarian": true,
+   "twist": true,
+   "file": "preserved-lemon.webp"
+  },
+  {
+   "id": "zaatar",
+   "name": "Za’atar",
+   "origin": "levantine",
+   "vegetarian": true,
+   "twist": true,
+   "file": "zaatar.webp"
+  },
+  {
+   "id": "yuzu-kosho",
+   "name": "Yuzu kosho",
+   "origin": "japanese",
+   "vegetarian": true,
+   "twist": true,
+   "file": "yuzu-kosho.webp"
+  },
+  {
+   "id": "fish-sauce",
+   "name": "Fish sauce",
+   "origin": "southeast-asian",
+   "vegetarian": false,
+   "twist": true,
+   "file": "fish-sauce.webp"
+  },
+  {
+   "id": "shrimp-paste",
+   "name": "Shrimp paste",
+   "origin": "southeast-asian",
+   "vegetarian": false,
+   "twist": true,
+   "file": "shrimp-paste.webp"
+  },
+  {
+   "id": "cilantro-lime-rice",
+   "name": "Cilantro-lime rice",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cilantro-lime-rice.webp"
+  },
+  {
+   "id": "black-beans",
+   "name": "Black beans",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "black-beans.webp"
+  },
+  {
+   "id": "fajita-peppers",
+   "name": "Fajita peppers",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "fajita-peppers.webp"
+  },
+  {
+   "id": "sofritas",
+   "name": "Braised chipotle tofu",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "sofritas.webp"
+  },
+  {
+   "id": "pico-de-gallo",
+   "name": "Pico de gallo",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "pico-de-gallo.webp"
+  },
+  {
+   "id": "corn-salsa",
+   "name": "Roasted corn salsa",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "corn-salsa.webp"
+  },
+  {
+   "id": "guacamole",
+   "name": "Guacamole",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "guacamole.webp"
+  },
+  {
+   "id": "shredded-romaine",
+   "name": "Shredded romaine",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "shredded-romaine.webp"
+  },
+  {
+   "id": "sour-cream",
+   "name": "Sour cream",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "sour-cream.webp"
+  },
+  {
+   "id": "monterey-jack",
+   "name": "Monterey Jack",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "monterey-jack.webp"
+  },
+  {
+   "id": "queso-blanco",
+   "name": "Queso blanco",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "queso-blanco.webp"
+  },
+  {
+   "id": "chipotle-honey-vinaigrette",
+   "name": "Chipotle-honey vinaigrette",
+   "origin": "cal-mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "chipotle-honey-vinaigrette.webp"
+  },
+  {
+   "id": "lime",
+   "name": "Lime",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "lime.webp"
+  },
+  {
+   "id": "grilled-chicken",
+   "name": "Grilled chicken",
+   "origin": "cal-mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "grilled-chicken.webp"
+  },
+  {
+   "id": "carnitas",
+   "name": "Carnitas",
+   "origin": "cal-mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "carnitas.webp"
+  },
+  {
+   "id": "steak",
+   "name": "Grilled steak",
+   "origin": "cal-mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "steak.webp"
+  },
+  {
+   "id": "sumac",
+   "name": "Sumac",
+   "origin": "levantine",
+   "vegetarian": true,
+   "twist": true,
+   "file": "sumac.webp"
+  },
+  {
+   "id": "furikake",
+   "name": "Furikake",
+   "origin": "japanese",
+   "vegetarian": false,
+   "twist": true,
+   "file": "furikake.webp"
+  },
+  {
+   "id": "corn-tortillas",
+   "name": "Corn tortillas",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "corn-tortillas.webp"
+  },
+  {
+   "id": "carne-asada",
+   "name": "Carne asada",
+   "origin": "mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "carne-asada.webp"
+  },
+  {
+   "id": "al-pastor",
+   "name": "Al pastor pork",
+   "origin": "mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "al-pastor.webp"
+  },
+  {
+   "id": "pollo-asado",
+   "name": "Pollo asado",
+   "origin": "mexican",
+   "vegetarian": false,
+   "twist": false,
+   "file": "pollo-asado.webp"
+  },
+  {
+   "id": "cebollitas",
+   "name": "Grilled scallions",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cebollitas.webp"
+  },
+  {
+   "id": "cilantro",
+   "name": "Fresh coriander",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cilantro.webp"
+  },
+  {
+   "id": "salsa-verde",
+   "name": "Salsa verde",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "salsa-verde.webp"
+  },
+  {
+   "id": "salsa-roja",
+   "name": "Salsa roja",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "salsa-roja.webp"
+  },
+  {
+   "id": "avocado",
+   "name": "Avocado",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "avocado.webp"
+  },
+  {
+   "id": "cotija",
+   "name": "Cotija cheese",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cotija.webp"
+  },
+  {
+   "id": "mexican-crema",
+   "name": "Mexican crema",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "mexican-crema.webp"
+  },
+  {
+   "id": "pickled-red-onion",
+   "name": "Pickled red onion",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "pickled-red-onion.webp"
+  },
+  {
+   "id": "radishes",
+   "name": "Radishes",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "radishes.webp"
+  },
+  {
+   "id": "charred-jalapeno",
+   "name": "Charred jalapeño",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "charred-jalapeno.webp"
+  },
+  {
+   "id": "doenjang",
+   "name": "Doenjang",
+   "origin": "korean",
+   "vegetarian": true,
+   "twist": true,
+   "file": "doenjang.webp"
+  },
+  {
+   "id": "dukkah",
+   "name": "Dukkah",
+   "origin": "egyptian",
+   "vegetarian": true,
+   "twist": true,
+   "file": "dukkah.webp"
+  },
+  {
+   "id": "basmati-rice",
+   "name": "Basmati rice",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "basmati-rice.webp"
+  },
+  {
+   "id": "garam-masala",
+   "name": "Garam masala",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "garam-masala.webp"
+  },
+  {
+   "id": "paneer",
+   "name": "Paneer",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "paneer.webp"
+  },
+  {
+   "id": "toor-dal",
+   "name": "Toor dal",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "toor-dal.webp"
+  },
+  {
+   "id": "cumin-seeds",
+   "name": "Cumin seeds",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "cumin-seeds.webp"
+  },
+  {
+   "id": "turmeric",
+   "name": "Turmeric",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "turmeric.webp"
+  },
+  {
+   "id": "ghee",
+   "name": "Ghee",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "ghee.webp"
+  },
+  {
+   "id": "naan",
+   "name": "Naan",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "naan.webp"
+  },
+  {
+   "id": "ripe-tomatoes",
+   "name": "Ripe tomatoes",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "ripe-tomatoes.webp"
+  },
+  {
+   "id": "green-chilli",
+   "name": "Green chilli",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "green-chilli.webp"
+  },
+  {
+   "id": "mustard-oil",
+   "name": "Mustard oil",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "mustard-oil.webp"
+  },
+  {
+   "id": "kasuri-methi",
+   "name": "Kasuri methi",
+   "origin": "indian",
+   "vegetarian": true,
+   "twist": false,
+   "file": "kasuri-methi.webp"
+  },
+  {
+   "id": "chicken-thigh",
+   "name": "Chicken thigh",
+   "origin": "indian",
+   "vegetarian": false,
+   "twist": false,
+   "file": "chicken-thigh.webp"
+  },
+  {
+   "id": "lamb-shoulder",
+   "name": "Lamb shoulder",
+   "origin": "indian",
+   "vegetarian": false,
+   "twist": false,
+   "file": "lamb-shoulder.webp"
+  },
+  {
+   "id": "chipotle-in-adobo",
+   "name": "Chipotle in adobo",
+   "origin": "mexican",
+   "vegetarian": true,
+   "twist": false,
+   "file": "chipotle-in-adobo.webp"
+  }
+ ]
+}

@@ -40,7 +40,10 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
   for (const chef of ['chefOne', 'chefTwo'] as const) {
     const panel = el('section', `purse purse--${chef}${state.auction?.turn === chef ? ' purse--turn' : ''}`);
     const own = chef === context.chef;
-    const name = el('h3', 'purse__name', own ? 'You' : context.names[chef]);
+    // The plates and the win banner use the player's real name, so the purse
+    // must too: a table where "You" and "Vivek" are the same person is a table
+    // that misreads who just won the ingredient.
+    const name = el('h3', 'purse__name', own ? `${context.names[chef]} (you)` : context.names[chef]);
     name.title = context.names[chef];
     panel.append(name);
     const coins = el('p', 'purse__coins', String(state.chefs[chef].coins));
@@ -60,7 +63,20 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
   hero.append(el('p', 'ingredient__count', current ? `Ingredient ${revealed} / ${state.totalItems}` : 'The ingredients are still a secret'));
   const plate = el('div', 'ingredient__plate');
   plate.setAttribute('aria-hidden', 'true');
-  plate.append(el('span', 'ingredient__monogram', current ? current.ingredient.name.slice(0, 1) : '?'));
+  const monogram = el('span', 'ingredient__monogram', current ? current.ingredient.name.slice(0, 1) : '?');
+  plate.append(monogram);
+  if (current && current.ingredient.id) {
+    // The library's own rendering of this exact ingredient. It covers the
+    // monogram when the tile exists and removes itself when it does not, so
+    // an unbuilt library degrades to the letter rather than a broken image.
+    const art = document.createElement('img');
+    art.className = 'ingredient__art';
+    art.alt = '';
+    art.decoding = 'async';
+    art.addEventListener('error', () => art.remove(), { once: true });
+    art.src = `/art/${encodeURIComponent(current.ingredient.id)}.webp`;
+    plate.append(art);
+  }
   hero.append(plate);
   if (current) {
     if (isTwistReveal(state)) hero.append(el('p', 'twist-badge', 'Cross-cuisine twist!'));
@@ -101,9 +117,11 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
     const raises = el('div', 'bid-raises');
     for (const step of [1, 2, 5]) {
       const amount = state.auction.standingBid + step;
-      const button = el('button', 'btn bid-raise', `+${step}`);
+      // The total you would commit is the hero; the increment is the aside.
+      // Under a five second clock the number that matters must be the big one.
+      const button = el('button', 'btn bid-raise', `${amount} ${amount === 1 ? 'coin' : 'coins'}`);
       button.type = 'button';
-      button.append(el('span', '', `${amount} ${amount === 1 ? 'coin' : 'coins'}`));
+      button.append(el('span', '', `+${step}`));
       button.setAttribute('aria-label', `Raise by ${step}, bid ${amount} ${amount === 1 ? 'coin' : 'coins'}`);
       button.dataset.action = `raise-${step}`;
       button.addEventListener('click', () => {
