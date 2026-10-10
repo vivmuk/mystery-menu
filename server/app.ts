@@ -24,7 +24,14 @@ export function createApp(): Express {
   const dir = clientDir();
   if (existsSync(dir)) {
     app.use(express.static(dir, { index: false, maxAge: '1h' }));
-    app.get(/^\/(?!api\/|socket\.io\/).*/, (_req, res) => {
+    // SPA fallback: only for browser navigations, never for the API, the socket
+    // transport, or anything health-related — a probe for a typo'd health path
+    // must 404, not receive an HTML page with a 200.
+    app.get(/^\/(?!api\/|socket\.io\/|healthz).*/, (req, res) => {
+      if (!req.accepts('html')) {
+        res.status(404).type('text/plain').send('Not found');
+        return;
+      }
       res.sendFile(path.join(dir, 'index.html'));
     });
   } else {
