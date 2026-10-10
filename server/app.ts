@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import express, { type Express } from 'express';
+import { RoomRegistry } from './rooms.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,12 +14,27 @@ export function clientDir(): string {
   return process.env.CLIENT_DIR ?? path.resolve(here, '..', 'dist', 'client');
 }
 
-export function createApp(): Express {
+export function createApp(registry: RoomRegistry = new RoomRegistry()): Express {
   const app = express();
   app.disable('x-powered-by');
+  app.use(express.json());
 
   app.get('/healthz', (_req, res) => {
     res.json({ ok: true, service: 'mystery-menu', ts: new Date().toISOString() });
+  });
+
+  app.post('/api/rooms', (_req, res) => {
+    const room = registry.create();
+    res.status(201).json({ code: room.code });
+  });
+
+  app.get('/api/rooms/:code', (req, res) => {
+    const room = registry.get(req.params.code ?? '');
+    if (!room) {
+      res.json({ exists: false });
+      return;
+    }
+    res.json({ exists: true, players: room.players.length, capacity: registry.state(room).capacity });
   });
 
   const dir = clientDir();

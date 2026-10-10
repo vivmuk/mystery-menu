@@ -109,6 +109,171 @@ body {
   color: var(--muted);
 }
 
+/* ---- lobby screens ---- */
+
+.screens {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.btn--primary {
+  background: var(--orange);
+  color: #fff;
+}
+
+.btn--primary:active {
+  background: #e04a12;
+}
+
+.btn--secondary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn--secondary:active {
+  background: #1747cc;
+}
+
+.join-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.join-form--stack {
+  flex-direction: column;
+}
+
+.code-input,
+.name-input {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 20px;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.name-input {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.code-input:focus,
+.name-input:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.card--code {
+  text-align: center;
+}
+
+.room-code {
+  margin: 4px 0 0;
+  font-size: clamp(56px, 18vw, 88px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  color: var(--orange);
+}
+
+.room-code--small {
+  font-size: clamp(36px, 12vw, 56px);
+  color: var(--blue);
+}
+
+.card--qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.qr {
+  width: 240px;
+  height: 240px;
+  max-width: 100%;
+  image-rendering: pixelated;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: var(--swatch, var(--muted));
+  cursor: pointer;
+  font-size: 0;
+}
+
+.swatch--picked {
+  border-color: var(--ink);
+}
+
+.player-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-list__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.player-list__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.player-list__name {
+  font-weight: 700;
+}
+
+.player-list__role {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .foot {
   margin-top: auto;
   border-top: 1px solid var(--line);
