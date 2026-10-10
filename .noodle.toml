@@ -14,6 +14,10 @@ paths = [".agents/skills"]
 max_concurrency = 3
 
 [agents.codex]
+# Noodle spawns cooks with a scrubbed environment, so an inherited
+# VENICE_API_KEY never reaches Codex. This wrapper sources the key from a 600
+# file outside every repo and then execs codex.
+path = "/home/vivgates/.local/bin/codex-venice"
 args = ["-c", "model_provider=venice"]
 
 [adapters.backlog.scripts]
