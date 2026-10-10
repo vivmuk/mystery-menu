@@ -1,0 +1,23 @@
+mode = "supervised"
+
+# The loop's brain runs on Venice models: Noodle dispatches the Codex CLI,
+# and the Codex CLI is pointed at Venice's OpenAI-compatible Responses API
+# via the `model_providers.venice` block in ~/.codex/config.toml.
+[routing.defaults]
+provider = "codex"
+model = "claude-opus-5-5"
+
+[skills]
+paths = [".agents/skills"]
+
+[concurrency]
+max_concurrency = 3
+
+[agents.codex]
+args = ["-c", "model_provider=venice"]
+
+[adapters.backlog.scripts]
+sync = "adapters/backlog-sync"
+add = "adapters/backlog-add"
+done = "adapters/backlog-done"
+edit = "adapters/backlog-edit"
