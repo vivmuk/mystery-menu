@@ -9,7 +9,7 @@ deploy. Read `docs/DESIGN.md` before starting any item.
 ## Inbox
 1. [x] Harden the build harness: the Railway build gate runs typecheck, build and tests before any deploy, plus socket and bundle smoke coverage ~small #bootstrap
 2. [x] Room + barcode join: create a room with a 4-letter code, render a QR code, let players join with name and colour, no accounts or passwords anywhere ~medium #join
-3. [ ] Venice service layer: server-side-only client for text, image and TTS using the key from the environment, with timeouts, retries and a /api/venice/health probe ~medium #venice
+3. [x] Venice service layer: server-side-only client for text, image and TTS using the key from the environment, with timeouts, retries and a /api/venice/health probe ~medium #venice
 4. [ ] Ingredient generation: from a deck, a vegetarian-only filter and one cross-cuisine twist, generate 5 ingredients per chef as strict validated JSON ~large #gameplay
 5. [ ] Ingredient art library: a build script that renders the curated canonical ingredient set with a fast image model and caches them as static files ~medium #art
 6. [ ] Live art for the cross-cuisine twist ingredient using a premium image model, cached by ingredient name so a repeat never regenerates ~medium #art
