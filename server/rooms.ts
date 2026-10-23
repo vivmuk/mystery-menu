@@ -18,18 +18,25 @@ export interface Player {
   name: string;
   colour: string;
   role: PlayerRole;
+  /** Seeded by the server for a solo demo; no phone is behind this seat. */
+  virtual?: boolean;
 }
 
 export interface Room {
   code: string;
   createdAt: number;
   players: Player[];
+  /** Solo demo: one human runs both chefs and the whole table. */
+  demo?: boolean;
 }
 
 export interface RoomStatePayload {
   code: string;
   capacity: number;
   players: Player[];
+  /** The socket that may drive reveals and open voting. Null before anyone joins. */
+  hostId: string | null;
+  demo?: boolean;
 }
 
 export type JoinResult = { ok: true; player: Player } | { ok: false; error: string };
@@ -80,13 +87,42 @@ export class RoomRegistry {
     return null;
   }
 
-  create(): Room {
+  create(demo = false): Room {
     let code = generateCode();
     while (this.rooms.has(code)) code = generateCode();
-    const room: Room = { code, createdAt: Date.now(), players: [] };
+    const room: Room = { code, createdAt: Date.now(), players: [], ...(demo ? { demo: true } : {}) };
     this.rooms.set(code, room);
     this.seats.set(code, { host: null, chefOne: null, chefTwo: null });
+    if (demo) this.seedDemo(room);
     return room;
+  }
+
+  /**
+   * A demo room arrives pre-seated: two chefs and three diners are virtual
+   * seats the host drives. That is what makes a one-phone demo possible
+   * without pretending the multiplayer rules changed.
+   */
+  private seedDemo(room: Room): void {
+    const seats = this.seats.get(room.code)!;
+    const virtual: Player[] = [
+      { id: 'demo-chef-one', name: 'Chef One', colour: '#ff6a2b', role: 'chef', virtual: true },
+      { id: 'demo-chef-two', name: 'Chef Two', colour: '#35a7ff', role: 'chef', virtual: true },
+      { id: 'demo-diner-1', name: 'Diner 1', colour: '#46ff9b', role: 'table', virtual: true },
+      { id: 'demo-diner-2', name: 'Diner 2', colour: '#ff2f9c', role: 'table', virtual: true },
+      { id: 'demo-diner-3', name: 'Diner 3', colour: '#8b5cff', role: 'table', virtual: true },
+    ];
+    room.players.push(...virtual);
+    seats.chefOne = 'demo-chef-one';
+    seats.chefTwo = 'demo-chef-two';
+  }
+
+  isDemo(room: Room): boolean {
+    return room.demo === true;
+  }
+
+  /** A seat with no phone behind it, which only a demo host may act for. */
+  isVirtualSeat(room: Room, key: string): boolean {
+    return room.players.some((player) => player.id === key && player.virtual === true);
   }
 
   get(code: string): Room | undefined {
@@ -134,7 +170,9 @@ export class RoomRegistry {
           : null;
     const player: Player = { id: socketId, name, colour, role: chef ? 'chef' : 'table' };
     if (chef) seats[chef] = socketId;
-    if (seats.host === null && room.players.length === 0) seats.host = socketId;
+    // First human at the table hosts. A demo room is seeded with virtual
+    // players, so its host is the first real phone rather than player #0.
+    if (seats.host === null) seats.host = socketId;
     room.players.push(player);
     return { ok: true, player };
   }
@@ -147,13 +185,22 @@ export class RoomRegistry {
       const seats = this.seats.get(room.code)!;
       if (seats.chefOne === socketId) seats.chefOne = null;
       if (seats.chefTwo === socketId) seats.chefTwo = null;
-      if (room.players.length === 0) this.delete(room.code);
+      if (seats.host === socketId) seats.host = null;
+      // A demo room with no human left is dead too — its virtual diners would
+      // otherwise keep it in memory forever.
+      if (!room.players.some((candidate) => candidate.virtual !== true)) this.delete(room.code);
       return player ? { room, player } : undefined;
     }
     return undefined;
   }
 
   state(room: Room): RoomStatePayload {
-    return { code: room.code, capacity: ROOM_CAPACITY, players: [...room.players] };
+    return {
+      code: room.code,
+      capacity: ROOM_CAPACITY,
+      players: [...room.players],
+      hostId: this.seats.get(room.code)?.host ?? null,
+      ...(room.demo ? { demo: true } : {}),
+    };
   }
 }

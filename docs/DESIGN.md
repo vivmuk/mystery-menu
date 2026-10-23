@@ -26,6 +26,7 @@ observed rules, not an impression.
 | 11 | Referee role | The avatar runs the draft: announces, taunts, calls the concede, rules on gifts |
 | 12 | The twist | Exactly one cross-cuisine ingredient per chef: plausible, from a cuisine that does not belong in this dish, never novelty candy |
 | 13 | Bid input | Live ascending bids with a shot clock; a sealed-bid toggle for remote play |
+| 14 | Demo mode | One-phone director mode: server-seeded virtual chefs and diners, auto-bid rival, and host-cast ballots. Same rules, no second phone. |
 
 Decisions 9–13 were taken as defaults from the source format; 9, 10 and 13 are the
 cheapest to change and the least load-bearing.

@@ -84,6 +84,10 @@ export function createGameServer(): GameServer {
         if (!room) throw new DraftError('wrong-phase', 'This room is not open.');
         if (referee) {
           if (!registry.isHost(room, socket.id)) throw new DraftError('invalid-action', 'Only the room host may drive the draft.');
+        } else if (registry.isDemo(room)) {
+          // A solo demo has one pair of hands. The host drives both virtual
+          // chef seats; the engine still enforces turn order and purses.
+          if (!registry.isHost(room, socket.id)) throw new DraftError('invalid-action', 'Only the demo host may play a chef seat.');
         } else {
           const chef = registry.chefForSocket(room, socket.id);
           if (!chef || chef !== (request as DraftChefRequest).chef) throw new DraftError('invalid-chef', 'Act only for your own chef seat.');
@@ -125,7 +129,14 @@ export function createGameServer(): GameServer {
           session.openVote(room.players.map(player => ({ key: player.id, role: player.role })));
           io.to(roomChannel(room.code)).emit('vote:state', session.voteState());
         } else {
-          const closed = session.castVote(socket.id, (request as VoteCastRequest).dish);
+          const demo = registry.isDemo(room);
+          const requested = (request as VoteCastRequest).voter;
+          // In a demo the host is the whole table: it may cast for a seeded
+          // diner. Anywhere else the ballot belongs to the socket, full stop.
+          const voter = demo && registry.isHost(room, socket.id) && typeof requested === 'string' && registry.isVirtualSeat(room, requested)
+            ? requested
+            : socket.id;
+          const closed = session.castVote(voter, (request as VoteCastRequest).dish);
           socket.emit('vote:accepted', { ok: true } satisfies VoteAcceptedPayload);
           // No event or count change for intermediate arrivals. Release one batch.
           if (closed) io.to(roomChannel(room.code)).emit('vote:state', session.voteState());

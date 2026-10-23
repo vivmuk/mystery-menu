@@ -128,7 +128,7 @@ describe('server-owned shot clock', () => {
     }
     expect(game.publicState()?.phase).toBe('plating');
     expect(Object.values(game.publicState()!.chefs).flatMap((chef) => chef.items).every((item) => item.ingredient.vegetarian)).toBe(true);
-    expect(Object.keys(rooms.state(room)).sort()).toEqual(['capacity', 'code', 'players']);
+    expect(Object.keys(rooms.state(room)).sort()).toEqual(['capacity', 'code', 'hostId', 'players']);
     expect(room).not.toHaveProperty('hands');
     games.dispose();
   });

@@ -65,9 +65,11 @@ export function createApp(
     }
   });
 
-  app.post('/api/rooms', (_req, res) => {
-    const room = registry.create();
-    res.status(201).json({ code: room.code });
+  app.post('/api/rooms', (req, res) => {
+    const body: unknown = req.body;
+    const demo = !!body && typeof body === 'object' && !Array.isArray(body) && (body as { demo?: unknown }).demo === true;
+    const room = registry.create(demo);
+    res.status(201).json({ code: room.code, demo: room.demo === true, players: room.players.length });
   });
 
   app.post('/api/rooms/:code/hands', async (req, res) => {

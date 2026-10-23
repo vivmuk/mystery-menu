@@ -10,8 +10,13 @@ export interface AuctionContext {
   connected: boolean;
   newReveal: boolean;
   newAward: boolean;
+  /** Solo demo: this one phone drives both chef seats. */
+  demo?: boolean;
   send: (event: 'draft:bid' | 'draft:take-it' | 'draft:reveal', payload: DraftBidRequest | DraftChefRequest | DraftRequest) => void;
 }
+
+/** Auto-bid for Chef Two, so a solo demo has a rival without a second phone. */
+let autoRival = true;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -137,7 +142,8 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
 
   let tick = (): void => {};
   let pending = false;
-  const buttons: { button: HTMLButtonElement; amount: number }[] = [];
+  const buttons: { button: HTMLButtonElement; amount: number; chef: Chef | null }[] = [];
+  const takes: { button: HTMLButtonElement; chef: Chef | null }[] = [];
   const clock = el('section', 'shot-clock');
   const clockLabel = el('p', 'shot-clock__label');
   const clockValue = el('strong', 'shot-clock__value');
@@ -154,6 +160,24 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
     tick();
     context.send(event, payload);
   };
+  let autoTimer: number | null = null;
+  let autoKey = '';
+  const scheduleAuto = (): void => {
+    if (!context.demo || !autoRival || !state.auction || state.auction.turn !== 'chefTwo') return;
+    const auction = state.auction;
+    const key = `${auction.item.slot}:${auction.standingBid}:${context.code}`;
+    if (key === autoKey) return;
+    autoKey = key;
+    const snapshot = state;
+    autoTimer = window.setTimeout(() => {
+      if (pending || !canAct(snapshot, 'chefTwo', Date.now())) return;
+      const coins = snapshot.chefs.chefTwo.coins;
+      const next = auction.standingBid + 1;
+      const wantsIt = next <= coins && auction.standingBid < Math.min(3, Math.max(1, coins - 1)) && Math.random() < 0.8;
+      if (wantsIt) submit('draft:bid', { code: context.code, chef: 'chefTwo', amount: next });
+      else submit('draft:take-it', { code: context.code, chef: 'chefTwo' });
+    }, 900 + Math.random() * 700);
+  };
   if (state.auction) {
     const standing = el('div', 'standing-bid');
     standing.append(el('span', '', 'Standing bid'), el('strong', '', `${state.auction.standingBid} ${state.auction.standingBid === 1 ? 'coin' : 'coins'}`));
@@ -161,49 +185,100 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
     controls.append(el('p', 'bid-owner', state.auction.bidder ? `${context.names[state.auction.bidder]} is bidding` : 'No bids yet. Open with 1 coin.'));
     clock.append(clockLabel, clockValue, track);
     screen.append(clock);
-    const raises = el('div', 'bid-raises');
-    for (const step of [1, 2, 5]) {
-      const amount = state.auction.standingBid + step;
-      // The total you would commit is the hero; the increment is the aside.
-      // Under a five second clock the number that matters must be the big one.
-      const button = el('button', 'btn bid-raise', `${amount} ${amount === 1 ? 'coin' : 'coins'}`);
-      button.type = 'button';
-      button.append(el('span', '', `+${step}`));
-      button.setAttribute('aria-label', `Raise by ${step}, bid ${amount} ${amount === 1 ? 'coin' : 'coins'}`);
-      button.dataset.action = `raise-${step}`;
-      button.addEventListener('click', () => {
-        if (!pending && context.connected && canBid(state, context.chef, amount, Date.now()) && context.chef) submit('draft:bid', { code: context.code, chef: context.chef, amount });
+
+    if (context.demo) {
+      // One phone, two chef seats. Both panels are always visible; the engine
+      // still disables the chef whose clock is not running.
+      const director = el('section', 'director');
+      director.append(el('p', 'director__hint', 'You are both chefs. Only the chef whose clock is running can act.'));
+      for (const chef of ['chefOne', 'chefTwo'] as const) {
+        const panel = el('div', `director-chef director-chef--${chef}${state.auction.turn === chef ? ' is-turn' : ''}`);
+        panel.append(el('h4', 'director-chef__name', context.names[chef]));
+        panel.append(el('p', 'director-chef__coins', `${state.chefs[chef].coins} coins left`));
+        const row = el('div', 'director-chef__actions');
+        for (const step of [1, 2, 5]) {
+          const amount = state.auction.standingBid + step;
+          if (amount > state.chefs[chef].coins) continue;
+          const button = el('button', 'btn bid-raise', `Bid ${amount}`);
+          button.type = 'button';
+          button.dataset.action = `raise-${step}`;
+          button.dataset.chef = chef;
+          button.setAttribute('aria-label', `${context.names[chef]} raises to ${amount}`);
+          button.addEventListener('click', () => {
+            if (!pending && context.connected && canBid(state, chef, amount, Date.now())) submit('draft:bid', { code: context.code, chef, amount });
+          });
+          buttons.push({ button, amount, chef });
+          row.append(button);
+        }
+        const pass = el('button', 'btn take-it', 'Take it');
+        pass.type = 'button';
+        pass.dataset.action = 'take-it';
+        pass.dataset.chef = chef;
+        pass.append(el('span', '', `Let ${context.names[chef === 'chefOne' ? 'chefTwo' : 'chefOne']} have it`));
+        pass.addEventListener('click', () => {
+          if (!pending && context.connected && canAct(state, chef, Date.now())) submit('draft:take-it', { code: context.code, chef });
+        });
+        takes.push({ button: pass, chef });
+        row.append(pass);
+        panel.append(row);
+        director.append(panel);
+      }
+      const autoWrap = el('label', 'auto-toggle');
+      const auto = document.createElement('input');
+      auto.type = 'checkbox';
+      auto.checked = autoRival;
+      auto.id = 'auto-rival';
+      auto.addEventListener('change', () => { autoRival = auto.checked; });
+      autoWrap.append(auto, el('span', '', 'Auto-bid Chef Two'));
+      director.append(autoWrap);
+      controls.append(director);
+    } else {
+      const raises = el('div', 'bid-raises');
+      for (const step of [1, 2, 5]) {
+        const amount = state.auction.standingBid + step;
+        // The total you would commit is the hero; the increment is the aside.
+        // Under a five second clock the number that matters must be the big one.
+        const button = el('button', 'btn bid-raise', `${amount} ${amount === 1 ? 'coin' : 'coins'}`);
+        button.type = 'button';
+        button.append(el('span', '', `+${step}`));
+        button.setAttribute('aria-label', `Raise by ${step}, bid ${amount} ${amount === 1 ? 'coin' : 'coins'}`);
+        button.dataset.action = `raise-${step}`;
+        button.addEventListener('click', () => {
+          if (!pending && context.connected && canBid(state, context.chef, amount, Date.now()) && context.chef) submit('draft:bid', { code: context.code, chef: context.chef, amount });
+        });
+        buttons.push({ button, amount, chef: context.chef });
+        raises.append(button);
+      }
+      controls.append(raises);
+      const next = el('button', 'btn btn--secondary bid-next', `Bid ${state.auction.standingBid + 1} · next legal bid`);
+      next.type = 'button';
+      next.dataset.action = 'next-bid';
+      const amount = state.auction.standingBid + 1;
+      next.addEventListener('click', () => {
+        if (!pending && context.connected && context.chef && canBid(state, context.chef, amount, Date.now())) submit('draft:bid', { code: context.code, chef: context.chef, amount });
       });
-      buttons.push({ button, amount });
-      raises.append(button);
+      buttons.push({ button: next, amount, chef: context.chef });
+      take.dataset.action = 'take-it';
+      take.append(el('span', '', `Let ${context.names[state.auction.turn === 'chefOne' ? 'chefTwo' : 'chefOne']} have it`));
+      take.addEventListener('click', () => {
+        if (!pending && context.connected && context.chef && canAct(state, context.chef, Date.now())) submit('draft:take-it', { code: context.code, chef: context.chef });
+      });
+      takes.push({ button: take, chef: context.chef });
+      controls.append(next, take);
     }
-    controls.append(raises);
-    const next = el('button', 'btn btn--secondary bid-next', `Bid ${state.auction.standingBid + 1} · next legal bid`);
-    next.type = 'button';
-    next.dataset.action = 'next-bid';
-    const amount = state.auction.standingBid + 1;
-    next.addEventListener('click', () => {
-      if (!pending && context.connected && context.chef && canBid(state, context.chef, amount, Date.now())) submit('draft:bid', { code: context.code, chef: context.chef, amount });
-    });
-    buttons.push({ button: next, amount });
-    take.dataset.action = 'take-it';
-    take.append(el('span', '', `Let ${context.names[state.auction.turn === 'chefOne' ? 'chefTwo' : 'chefOne']} have it`));
-    take.addEventListener('click', () => {
-      if (!pending && context.connected && context.chef && canAct(state, context.chef, Date.now())) submit('draft:take-it', { code: context.code, chef: context.chef });
-    });
-    controls.append(next, take);
     tick = (): void => {
       const now = Date.now();
       const remaining = remainingMs(state.deadline, now);
       setText(clockValue, `${Math.ceil(remaining / 1000)}s`);
-      setText(clockLabel, remaining === 0 ? 'Time’s up · waiting for the referee' : context.chef === state.auction!.turn ? 'Your shot clock' : `${context.names[state.auction!.turn]}’s shot clock`);
+      setText(clockLabel, remaining === 0 ? 'Time’s up · waiting for the referee' : context.demo ? `${context.names[state.auction!.turn]}’s shot clock` : context.chef === state.auction!.turn ? 'Your shot clock' : `${context.names[state.auction!.turn]}’s shot clock`);
       fill.style.transform = `scaleX(${remaining / 10000})`;
       clock.classList.toggle('shot-clock--urgent', remaining > 0 && remaining <= 3000);
-      for (const { button, amount } of buttons) button.disabled = pending || !context.connected || !canBid(state, context.chef, amount, now);
-      take.disabled = pending || !context.connected || !canAct(state, context.chef, now);
-      setText(notice, !context.connected ? 'Connection lost. Controls are paused.' : pending ? 'Waiting for the referee…' : remaining === 0 ? 'The server is settling this ingredient.' : context.chef === null ? `${context.names[state.auction!.turn]}’s turn. You’re watching from the table.` : state.auction!.turn === context.chef ? 'Your turn! Raise or say “Take it”.' : `${context.names[state.auction!.turn]}’s turn. Get ready.`);
+      for (const item of buttons) item.button.disabled = pending || !context.connected || !canBid(state, item.chef, item.amount, now);
+      for (const item of takes) item.button.disabled = pending || !context.connected || !canAct(state, item.chef, now);
+      setText(notice, !context.connected ? 'Connection lost. Controls are paused.' : pending ? 'Waiting for the referee…' : remaining === 0 ? 'The server is settling this ingredient.' : context.demo ? (state.auction!.turn === 'chefOne' ? 'Chef One’s turn — bid or take it.' : 'Chef Two’s turn — bid or take it.') : context.chef === null ? `${context.names[state.auction!.turn]}’s turn. You’re watching from the table.` : state.auction!.turn === context.chef ? 'Your turn! Raise or say “Take it”.' : `${context.names[state.auction!.turn]}’s turn. Get ready.`);
     };
     screen.append(controls);
+    scheduleAuto();
   } else {
     notice.textContent = !context.connected ? 'Connection lost. Controls are paused.' : state.pendingTrade ? 'A trade needs an answer before the next reveal.' : state.phase === 'reveal' ? context.host ? 'You’re the referee. Reveal the next ingredient.' : 'Waiting for the host to reveal the next ingredient.' : state.phase === 'plating' ? 'Dishes are ready for the table.' : state.winner ? `${context.names[state.winner]} wins!` : 'Round complete.';
   }
@@ -277,5 +352,8 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
   root.append(screen);
   tick();
   const interval = state.auction ? window.setInterval(tick, 100) : null;
-  return () => { if (interval !== null) window.clearInterval(interval); };
+  return () => {
+    if (interval !== null) window.clearInterval(interval);
+    if (autoTimer !== null) window.clearTimeout(autoTimer);
+  };
 }

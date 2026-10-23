@@ -386,7 +386,7 @@ describe('no early leak of hands into room state', () => {
     const deck = deckById('pizza')!;
     const { chefOne, chefTwo } = await generateHands(deck, { random: seededRandom(31) });
     const dealt = { chefOne, chefTwo };
-    const stateShapeKeys = ['code', 'capacity', 'players'];
+    const stateShapeKeys = ['code', 'capacity', 'players', 'hostId'];
 
     // The room-state payload contract: exactly these keys, nothing more.
     const { RoomRegistry } = await import('../server/rooms.ts');

@@ -17,6 +17,7 @@ votes.
 | Phase | What happens |
 |-------|--------------|
 | **Lobby** | Host creates a room, everyone else scans the QR code and types a name. No accounts, no passwords, no email. |
+| **Solo demo** | One phone can run the whole table: the host is seated as Director, two virtual chefs and three virtual diners are seeded, and every reveal, bid and ballot is driven from that screen. No second phone required. |
 | **Deck** | A theme is drawn (Pizza, Bowls, Tacos, Indian, Chaos Mix) and ten ingredients are generated for the match, five per chef. Neither chef sees them. |
 | **Auction** | The referee announces one ingredient. Both chefs bid upward from a budget of ten coins against a ten second clock. Concede with **Take it**. Run out of coins and you take everything left for free. |
 | **Plating** | Both dishes assemble in 3D from their five ingredients, the cross-cuisine twist landing last. |
@@ -24,6 +25,24 @@ votes.
 
 The vegetarian filter swaps the whole ingredient pool, so a dish either is or is not
 safe for the table before anybody bids on it.
+
+## Solo demo
+
+Tap **Start a solo demo** on the home screen. The server seeds a demo room with
+two virtual chefs and three virtual diners, seats you as the Director, and hands
+you every control:
+
+- **Reveal** each ingredient as the referee.
+- **Bid or take it** for either chef; only the chef whose clock is running can
+  act. **Auto-bid Chef Two** (on by default) gives you a rival without a second
+  phone.
+- **Cast every diner's ballot** after opening the vote. The tally still releases
+  as one aggregate, so the anonymity rule is unchanged. *Fill the rest at random*
+  finishes a demo in one tap.
+
+The demo is a real room with real rules — the virtual seats are server-side
+seats, not a client-side simulation. Only the demo host may act for them, and a
+second phone that joins cannot drive the chefs or cast a virtual ballot.
 
 ## Under the hood
 

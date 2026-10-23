@@ -1132,3 +1132,274 @@ select option { background: var(--panel-solid); color: var(--ink); }
 
 
 
+
+/* ==================================================================== */
+/* FOURTH PASS: the demo director, and more of everything               */
+/* ==================================================================== */
+
+/* Display type. The game is a broadcast, so the headings get a voice with
+ * more personality than the system UI face — with a safe fallback stack. */
+:root {
+  --font-display: 'Bricolage Grotesque', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+}
+
+.brand h1,
+.pitch__lede,
+.auction-heading h2,
+.ingredient__name,
+.vote-dish h3,
+.vote-result h2,
+.director-chef__name {
+  font-family: var(--font-display);
+}
+
+/* The home screen's demo door: the fastest way to see the game, so it is the
+ * loudest card on the page. */
+.card--demo {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(41, 240, 255, 0.55);
+  background:
+    radial-gradient(420px 220px at 100% 0%, rgba(41, 240, 255, 0.26), transparent 65%),
+    radial-gradient(380px 220px at 0% 100%, rgba(255, 47, 156, 0.24), transparent 65%),
+    var(--panel-solid);
+  box-shadow: 0 0 0 1px rgba(41, 240, 255, 0.18), 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 48px -14px rgba(41, 240, 255, 0.8);
+}
+.card--demo::after {
+  content: '';
+  position: absolute;
+  inset: -40% -20%;
+  background: conic-gradient(from 0deg, transparent 0 72%, rgba(41, 240, 255, 0.16) 82%, transparent 92%);
+  animation: demo-sweep 7s linear infinite;
+  pointer-events: none;
+}
+@keyframes demo-sweep { to { transform: rotate(1turn); } }
+.card--demo .card__num { color: var(--cyan); }
+.card--demo h2 { font-size: 1.4rem; }
+.btn--demo {
+  width: 100%;
+  margin-top: 14px;
+  background: linear-gradient(120deg, var(--cyan), var(--green));
+  color: #04211d;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 30px -6px rgba(41, 240, 255, 0.9);
+  font-weight: 900;
+}
+.btn--demo:active { transform: translateY(1px) scale(0.995); }
+
+.demo-banner {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(41, 240, 255, 0.6);
+  background: linear-gradient(180deg, rgba(41, 240, 255, 0.12), rgba(41, 240, 255, 0.03));
+}
+.demo-banner__tag {
+  justify-self: start;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--cyan);
+  color: #04211d;
+  font: 800 11px/1 var(--font-display);
+  letter-spacing: 0.16em;
+}
+.demo-banner p { margin: 0; font-size: 13.5px; line-height: 1.45; color: #d9f8ff; }
+.card--code-quiet .room-code { font-size: 1.5rem; letter-spacing: 0.2em; text-shadow: 0 0 14px rgba(41, 240, 255, 0.6); }
+.card--code-quiet { background: rgba(41, 240, 255, 0.05); border-color: rgba(41, 240, 255, 0.32); }
+
+.player-list__row--virtual { border-style: dashed; }
+.player-list__row--virtual .player-list__role { color: var(--cyan); }
+
+/* The ingredient is the star of the auction: a big plate, a halo that turns,
+ * and a name that lands with weight. */
+.ingredient { padding: 18px 18px 22px; }
+.ingredient::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 34px;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  background: conic-gradient(from 0deg, transparent 0 55%, rgba(41, 240, 255, 0.5), transparent 78%);
+  border-radius: 50%;
+  filter: blur(22px);
+  opacity: 0.5;
+  animation: demo-sweep 9s linear infinite;
+}
+.ingredient__plate {
+  width: 148px;
+  height: 148px;
+  margin-bottom: 14px;
+}
+.ingredient__monogram { width: 74px; height: 74px; font-size: 58px; }
+.ingredient__name { font-size: clamp(34px, 10vw, 56px); }
+.ingredient--new { animation: ingredient-land 520ms cubic-bezier(0.2, 1.3, 0.35, 1) both; }
+@keyframes ingredient-land {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.01); }
+  to { opacity: 1; transform: none; }
+}
+
+.purse--turn { animation: purse-breathe 1.9s ease-in-out infinite; }
+
+/* The director controls: two chef panels, always visible, one clock. */
+.director { display: grid; gap: 10px; }
+.director__hint { margin: 0; font-size: 13px; line-height: 1.4; color: #cbbce8; }
+.director-chef {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--chef, var(--orange));
+  border-radius: 14px;
+  background: rgba(246, 242, 255, 0.035);
+  opacity: 0.62;
+  transition: opacity 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.director-chef--chefTwo { --chef: var(--blue); }
+.director-chef.is-turn {
+  opacity: 1;
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(246, 242, 255, 0.09), rgba(246, 242, 255, 0.03));
+  box-shadow: 0 0 0 1px var(--chef), 0 0 30px -10px var(--chef);
+}
+.director-chef__name { margin: 0; font-size: 15px; color: var(--chef); letter-spacing: -0.01em; }
+.director-chef__coins { margin: 0; font: 800 12px/1.2 var(--font-display); color: var(--green); letter-spacing: 0.06em; text-transform: uppercase; }
+.director-chef__actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.director-chef__actions .btn { min-height: 46px; margin: 0; font-size: 16px; }
+.director-chef__actions .take-it { grid-column: 1 / -1; min-height: 40px; font-size: 14px; }
+
+.auto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #d9f8ff;
+}
+.auto-toggle input { width: 22px; height: 22px; accent-color: var(--cyan); }
+
+/* The ballot panel: one row per diner, two choices, no hidden arithmetic. */
+.director-ballot {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(41, 240, 255, 0.42);
+  background: linear-gradient(180deg, rgba(41, 240, 255, 0.09), rgba(41, 240, 255, 0.02));
+}
+.director-ballot h3 { margin: 0; font: 900 18px/1.2 var(--font-display); }
+.director-ballot__hint { margin: 0; font-size: 12.5px; line-height: 1.4; color: #c9edf7; }
+.director-ballot__rows { display: grid; gap: 8px; }
+.director-ballot__row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(10, 6, 20, 0.45);
+}
+.director-ballot__row.is-voted { border-color: rgba(70, 255, 155, 0.55); }
+.director-ballot__dot { width: 10px; height: 10px; border-radius: 50%; }
+.director-ballot__name { font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
+.director-ballot__state { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.director-ballot__row.is-voted .director-ballot__state { color: var(--green); }
+.director-ballot__actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.director-ballot__pick { min-height: 44px; margin: 0; font-size: 13px; background: rgba(246, 242, 255, 0.07); border: 1px solid var(--line); box-shadow: none; }
+.director-ballot__row.is-voted .director-ballot__pick { min-height: 0; display: none; }
+.director-ballot__fill { min-height: 46px; margin: 0; font-size: 14px; }
+@media (min-width: 460px) {
+  .director-ballot__row { grid-template-columns: 10px minmax(0, 1fr) auto minmax(150px, auto); }
+  .director-ballot__actions { grid-column: auto; grid-template-columns: 1fr 1fr; }
+}
+
+/* Winning dish: a brag, with confetti that costs nothing. */
+.vote-result {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 18px;
+  border: 1px solid rgba(41, 240, 255, 0.5);
+  border-radius: 18px;
+  background:
+    radial-gradient(420px 180px at 50% 0%, rgba(41, 240, 255, 0.24), transparent 70%),
+    var(--panel-solid);
+  box-shadow: 0 0 48px -14px rgba(41, 240, 255, 0.8);
+  animation: result-land 520ms cubic-bezier(0.2, 1.3, 0.35, 1) both;
+}
+.vote-result::before,
+.vote-result::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  top: -10px;
+  left: 12%;
+  background: var(--cyan);
+  box-shadow:
+    32px 6px 0 var(--pink), 74px -2px 0 var(--green), 118px 10px 0 var(--orange),
+    162px -4px 0 var(--violet), 206px 8px 0 var(--cyan), 250px -6px 0 var(--pink),
+    294px 4px 0 var(--green), 338px -2px 0 var(--orange), 382px 6px 0 var(--violet);
+  animation: confetti-fall 2.4s linear infinite;
+  opacity: 0.85;
+}
+.vote-result::after {
+  left: 30%;
+  animation-delay: -1.2s;
+  animation-duration: 3.1s;
+  box-shadow:
+    24px 2px 0 var(--green), 60px -4px 0 var(--cyan), 104px 8px 0 var(--pink),
+    148px -2px 0 var(--violet), 192px 4px 0 var(--orange), 236px -6px 0 var(--green),
+    280px 6px 0 var(--cyan), 324px -2px 0 var(--pink);
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  12% { opacity: 0.9; }
+  100% { transform: translateY(240px) rotate(320deg); opacity: 0; }
+}
+@keyframes result-land {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Dish cards get the ingredient art strip behind the names, so a vote is a
+ * choice between two pictures and not two bullet lists. */
+.vote-dish {
+  background:
+    radial-gradient(360px 180px at 0% 0%, rgba(255, 106, 43, 0.16), transparent 60%),
+    var(--panel);
+}
+.vote-dish.dish--chefTwo {
+  background:
+    radial-gradient(360px 180px at 0% 0%, rgba(53, 167, 255, 0.18), transparent 60%),
+    var(--panel);
+}
+.vote-dish .dish__items li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.vote-count { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+/* A phone held at a table: prefer the biggest readable controls. */
+@media (max-width: 380px) {
+  .director-chef__actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ingredient__plate { width: 120px; height: 120px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card--demo::after,
+  .ingredient::before,
+  .ingredient--new,
+  .vote-result,
+  .vote-result::before,
+  .vote-result::after,
+  .purse--turn { animation: none !important; }
+}

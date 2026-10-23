@@ -18,6 +18,9 @@ let voteError: string | null = null;
 let voteEligible = false;
 let playerList: HTMLUListElement | null = null;
 let hostSocket: string | null = null;
+/** Solo demo: this phone drives both chef seats and the table. */
+let isDemo = false;
+const demoBallots: Record<string, Chef> = {};
 const seatSockets: Record<Chef, string | null> = { chefOne: null, chefTwo: null };
 let disposeAuction: (() => void) | null = null;
 let preparing = false;
@@ -58,6 +61,9 @@ function clearScreen(): HTMLElement {
   disposeAuction = null;
   playerList = null;
   app.replaceChildren();
+  // A new phase is a new screen. Without this, a phone scrolled down in the
+  // lobby lands halfway through the auction with the ingredient off-screen.
+  window.scrollTo({ top: 0, behavior: 'instant' });
   return app;
 }
 
@@ -109,8 +115,19 @@ function seatChooser(initial: PlayerRole, onPick: (seat: PlayerRole) => void): H
 function showHome(): void {
   const root = clearScreen();
 
-  const lede = el('p', 'pitch__lede', 'Open a room, pass the phone, or scan in.');
+  const lede = el('p', 'pitch__lede', 'Open a room, run the whole table solo, or scan in.');
   root.appendChild(lede);
+  root.appendChild(el('p', 'pitch__sub', 'Two chefs. Five secret ingredients each. One table voting on the dish they would actually eat.'));
+
+  const demoCard = el('div', 'card card--demo');
+  demoCard.appendChild(el('span', 'card__num', 'DEMO · ONE PHONE'));
+  demoCard.appendChild(el('h2', undefined, 'Run the whole table yourself'));
+  demoCard.appendChild(el('p', undefined, 'You are the referee, both chefs and every diner. Perfect for showing the game without asking anyone to scan in. Chef Two can auto-bid if you want a rival.'));
+  const demoBtn = el('button', 'btn btn--demo', 'Start a solo demo');
+  demoBtn.type = 'button';
+  demoBtn.addEventListener('click', () => void createRoom(true));
+  demoCard.appendChild(demoBtn);
+  root.appendChild(demoCard);
 
   const createCard = el('div', 'card');
   createCard.appendChild(el('span', 'card__num', 'HOST'));
@@ -123,7 +140,7 @@ function showHome(): void {
   }));
   const createBtn = el('button', 'btn btn--primary', 'Create a room');
   createBtn.type = 'button';
-  createBtn.addEventListener('click', () => void createRoom());
+  createBtn.addEventListener('click', () => void createRoom(false));
   createCard.appendChild(createBtn);
   root.appendChild(createCard);
 
@@ -154,13 +171,17 @@ function showHome(): void {
 /* Host lobby                                                          */
 /* ------------------------------------------------------------------ */
 
-async function createRoom(): Promise<void> {
-  setStatus('Opening a room…');
+async function createRoom(demo = false): Promise<void> {
+  setStatus(demo ? 'Setting a demo table…' : 'Opening a room…');
   try {
-    const res = await fetch('/api/rooms', { method: 'POST' });
+    const res = await fetch('/api/rooms', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ demo }),
+    });
     if (!res.ok) throw new Error(`create failed: ${res.status}`);
-    const body = (await res.json()) as { code: string };
-    showHostLobby(body.code);
+    const body = (await res.json()) as { code: string; demo?: boolean };
+    showHostLobby(body.code, body.demo === true);
   } catch {
     setStatus('Could not open a room — is the kitchen online?');
   }
@@ -185,26 +206,38 @@ async function findRoom(code: string): Promise<void> {
   }
 }
 
-function showHostLobby(code: string): void {
+function showHostLobby(code: string, demo = false): void {
+  isDemo = demo;
   const root = clearScreen();
-  root.appendChild(el('p', 'pitch__lede', 'Pass the phone around.'));
+  root.appendChild(el('p', 'pitch__lede', demo ? 'You’re the whole table.' : 'Pass the phone around.'));
 
-  const codeCard = el('div', 'card card--code');
-  codeCard.appendChild(el('span', 'card__num', 'ROOM CODE'));
+  if (demo) {
+    const banner = el('div', 'demo-banner');
+    banner.append(
+      el('span', 'demo-banner__tag', 'SOLO DEMO'),
+      el('p', undefined, 'Two chefs and three diners are already seated. You drive all of them — reveal, bid for either chef, then cast the table’s ballots. Chef Two can auto-bid for you.'),
+    );
+    root.appendChild(banner);
+  }
+
+  const codeCard = el('div', `card card--code${demo ? ' card--code-quiet' : ''}`);
+  codeCard.appendChild(el('span', 'card__num', demo ? 'DEMO TABLE' : 'ROOM CODE'));
   codeCard.appendChild(el('p', 'room-code', code));
   root.appendChild(codeCard);
 
-  const qrCard = el('div', 'card card--qr');
-  const canvas = document.createElement('canvas');
-  canvas.className = 'qr';
-  qrCard.appendChild(canvas);
-  qrCard.appendChild(el('p', undefined, 'Scan to join this table.'));
-  root.appendChild(qrCard);
+  if (!demo) {
+    const qrCard = el('div', 'card card--qr');
+    const canvas = document.createElement('canvas');
+    canvas.className = 'qr';
+    qrCard.appendChild(canvas);
+    qrCard.appendChild(el('p', undefined, 'Scan to join this table.'));
+    root.appendChild(qrCard);
 
-  const joinUrl = `${window.location.origin}/?code=${code}`;
-  QRCode.toCanvas(canvas, joinUrl, { width: 240, margin: 1 }, (err) => {
-    if (err) setStatus('The barcode failed to draw — the code still works.');
-  });
+    const joinUrl = `${window.location.origin}/?code=${code}`;
+    QRCode.toCanvas(canvas, joinUrl, { width: 240, margin: 1 }, (err) => {
+      if (err) setStatus('The barcode failed to draw — the code still works.');
+    });
+  }
 
   const listCard = el('div', 'card');
   listCard.appendChild(el('h2', undefined, 'At the table'));
@@ -212,7 +245,7 @@ function showHostLobby(code: string): void {
   listCard.appendChild(list);
   root.appendChild(listCard);
 
-  joinRoom(code, 'Host', PLAYER_COLOURS[0].value, homeSeat);
+  joinRoom(code, demo ? 'Director' : 'Host', PLAYER_COLOURS[0].value, demo ? 'table' : homeSeat);
   wireRoomState(code, list);
 }
 
@@ -333,7 +366,7 @@ function renderAuction(newReveal = false, newAward = false): void {
   }
   disposeAuction = mountAuction(clearScreen(), draftState, {
     code: roomCode, chef: myChef(), names, host: hostSocket === socket.id,
-    connected: socket.connected, newReveal, newAward,
+    connected: socket.connected, newReveal, newAward, demo: isDemo,
     send: (event, payload) => socket.emit(event, payload),
   });
 }
@@ -352,9 +385,18 @@ function renderVote(): void {
     }
     root.append(renderPlatedDishes(draftState, names));
   }
+  const voters = isDemo
+    ? [
+        ...((roomState?.players ?? [])
+          .filter((player) => player.virtual === true && player.role === 'table')
+          .map((player) => ({ key: player.id, name: player.name, colour: player.colour }))),
+        { key: socket.id ?? 'me', name: 'You (Director)', colour: '#ff6a2b' },
+      ]
+    : [];
   mountVote(root, voteState, {
     code: roomCode, host: hostSocket === socket.id, eligible: voteEligible,
     connected: socket.connected, locked: voteLocked, pending: votePending, error: voteError,
+    demo: isDemo, voters, myKey: socket.id ?? '', ballots: demoBallots,
     send: (event, payload) => { votePending = true; voteError = null; socket.emit(event, payload); },
   });
 }
@@ -365,7 +407,10 @@ function updateHostSetup(): void {
   if (!setup) {
     setup = el('section', 'card draft-setup');
     setup.id = 'draft-setup';
-    setup.append(el('h2', undefined, 'Let’s cook'), el('p', undefined, 'Two chefs. Ten secret ingredients. Choose your menu.'));
+    setup.append(
+      el('h2', undefined, isDemo ? 'Set the demo table' : 'Let’s cook'),
+      el('p', undefined, isDemo ? 'Both chef seats are yours. Pick a menu and deal ten secret ingredients.' : 'Two chefs. Ten secret ingredients. Choose your menu.'),
+    );
     const label = el('label', 'setup-label', 'Menu');
     const menu = el('select', 'menu-select');
     menu.id = 'draft-menu';
@@ -387,7 +432,7 @@ function updateHostSetup(): void {
     error.id = 'draft-error';
     error.setAttribute('role', 'alert');
     error.hidden = true;
-    const start = el('button', 'btn btn--primary', 'Start draft');
+    const start = el('button', 'btn btn--primary', isDemo ? 'Start the demo' : 'Start draft');
     start.type = 'button';
     start.id = 'draft-start';
     start.addEventListener('click', () => void prepareDraft());
@@ -430,13 +475,15 @@ socket.on('room:state', (state: RoomState) => {
   if (state.code !== roomCode) return;
   const firstSnapshot = roomState === null;
   roomState = state;
+  if (typeof state.demo === 'boolean') isDemo = state.demo;
+  // The server owns the host seat; reading it beats inferring it from join order.
+  if (state.hostId) hostSocket = state.hostId;
   const chefs = state.players.filter((player) => player.role === 'chef');
   // room:state has no seat IDs. Track stable seats from the initial lobby,
   // then fill only vacated seats; never renumber the surviving chef.
   if (firstSnapshot) {
     seatSockets.chefOne = chefs[0]?.id ?? null;
     seatSockets.chefTwo = chefs[1]?.id ?? null;
-    if (state.players.length === 1 && state.players[0]?.id === socket.id) hostSocket = socket.id ?? null;
   } else {
     for (const chef of ['chefOne', 'chefTwo'] as const) {
       if (!chefs.some((player) => player.id === seatSockets[chef])) seatSockets[chef] = null;
@@ -449,16 +496,16 @@ socket.on('room:state', (state: RoomState) => {
   }
   if (!playerList && !draftState && hostSocket !== socket.id) showPlayerLobby(state.code);
   playerList?.replaceChildren(...state.players.map((player) => {
-    const row = el('li', 'player-list__row');
+    const row = el('li', `player-list__row${player.virtual ? ' player-list__row--virtual' : ''}`);
     const dot = el('span', 'player-list__dot');
     dot.style.backgroundColor = player.colour;
     // Say the seat in the table's own language: COOKING or JUDGING, never the
     // internal role name — a host who chose to judge should recognise himself.
-    const role = player.role === 'chef' ? 'COOKING' : 'JUDGING';
+    const role = player.virtual ? (player.role === 'chef' ? 'DEMO CHEF' : 'DEMO DINER') : player.role === 'chef' ? 'COOKING' : 'JUDGING';
     row.append(dot, el('span', 'player-list__name', player.name), el('span', 'player-list__role', role));
     return row;
   }));
-  setStatus(`Room ${state.code} · ${state.players.length}/${state.capacity} seated.`);
+  setStatus(`Room ${state.code} · ${state.players.filter((p) => !p.virtual).length} on this phone · ${state.players.length} seated.`);
   if (draftState) renderAuction();
   else updateHostSetup();
 });
