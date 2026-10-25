@@ -21,7 +21,7 @@
  */
 
 import { randomInt } from 'node:crypto';
-import { deckById, type Deck, type Ingredient, type Random } from './deck.ts';
+import { deckById, makeCustomDeck, slugId, type Deck, type Ingredient, type Random } from './deck.ts';
 import type { VeniceClient } from '../venice/client.ts';
 
 /** Exactly five ingredients per chef — the format's most load-bearing number. */
@@ -354,4 +354,138 @@ export async function generateHands(
     },
     vegetarianOnly,
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Custom dish: the host types ANY dish or cuisine                      */
+/* ------------------------------------------------------------------ */
+
+const CUSTOM_SYSTEM_PROMPT =
+  'You invent ingredients for a party cooking game. Reply with JSON only — ' +
+  'exactly the object shape requested — and no other text.';
+
+interface CustomIngredientDraft {
+  name: string;
+  origin: string;
+  vegetarian: boolean;
+  vegan: boolean;
+}
+
+function customUserPrompt(dishName: string, vegetarianOnly: boolean): string {
+  return JSON.stringify({
+    task:
+      'Invent the two chefs\' secret ingredient hands for this dish or cuisine. ' +
+      'Every ingredient must be a real, cookable, purchasable ingredient — never a prepared dish, brand, or novelty.',
+    dish: dishName,
+    rules: [
+      'Each hand is exactly 5 ingredients.',
+      'In each hand, the LAST ingredient is a cross-cuisine twist from a clearly different culinary tradition — surprising but genuinely cookable.',
+      'No ingredient name appears in both hands; all ten names are distinct (case-insensitive).',
+      ...(vegetarianOnly ? ['EVERY ingredient must be vegetarian (no meat, no fish); set the flags accordingly.'] : []),
+      'vegan must be false whenever the ingredient contains any animal product (dairy, honey, etc.).',
+    ],
+    format: {
+      chefOne: { ingredients: [{ name: 'string', origin: 'string', vegetarian: true, vegan: true }] },
+      chefTwo: { ingredients: [{ name: 'string', origin: 'string', vegetarian: true, vegan: true }] },
+    },
+  });
+}
+
+/** A parsed custom reply that survives every structural check. */
+function parseCustomReply(
+  dishName: string,
+  content: string,
+  vegetarianOnly: boolean,
+): { chefOne: Hand; chefTwo: Hand; deck: Deck } | undefined {
+  const parsed = extractJsonObject(content);
+  if (!parsed) return undefined;
+  const readHand = (value: unknown): CustomIngredientDraft[] | undefined => {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+    const list = (value as { ingredients?: unknown }).ingredients;
+    if (!Array.isArray(list) || list.length !== INGREDIENTS_PER_CHEF) return undefined;
+    const out: CustomIngredientDraft[] = [];
+    for (const entry of list) {
+      if (typeof entry !== 'object' || entry === null) return undefined;
+      const raw = entry as Record<string, unknown>;
+      const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+      const origin = typeof raw.origin === 'string' ? raw.origin.trim() : '';
+      if (!name || name.length > 80 || origin.length > 40) return undefined;
+      if (typeof raw.vegetarian !== 'boolean' || typeof raw.vegan !== 'boolean') return undefined;
+      // The dietary flags are a promise about data, not a model's guess: a
+      // non-vegetarian ingredient in a vegetarian match is a hard rejection.
+      // Vegan is a separate, softer flag — dairy is vegetarian, so only the
+      // vegetarian flag gates a vegetarian match.
+      if (vegetarianOnly && !raw.vegetarian) return undefined;
+      out.push({ name, origin, vegetarian: raw.vegetarian, vegan: raw.vegan });
+    }
+    return out;
+  };
+  const one = readHand(parsed.chefOne);
+  const two = readHand(parsed.chefTwo);
+  if (!one || !two) return undefined;
+
+  // All ten names distinct, case-insensitively — a repeat reads like a bug.
+  const seen = new Set<string>();
+  for (const draft of [...one, ...two]) {
+    const key = draft.name.toLowerCase();
+    if (seen.has(key)) return undefined;
+    seen.add(key);
+  }
+
+  const toIngredient = (draft: CustomIngredientDraft): Ingredient => ({
+    id: slugId(draft.name),
+    name: draft.name,
+    vegetarian: draft.vegetarian,
+    vegan: draft.vegan,
+    origin: draft.origin || 'custom',
+  });
+  // The twist is the last ingredient of each hand — the deck split relies on it.
+  const deck = makeCustomDeck(dishName, [...one, ...two].map(toIngredient));
+  return {
+    chefOne: { deckId: deck.id, ingredients: one.map(toIngredient) },
+    chefTwo: { deckId: deck.id, ingredients: two.map(toIngredient) },
+    deck,
+  };
+}
+
+export interface GenerateCustomHandsOptions {
+  vegetarianOnly?: boolean;
+  venice?: VeniceClient;
+  random?: Random;
+}
+
+/**
+ * Generates both hands for a host-typed dish. Venice invents all ten
+ * ingredients; the structural checks here decide whether its answer is usable.
+ * ANY failure — no client, network error, malformed JSON, a repeated name, a
+ * bad dietary flag — falls back to the Chaos Mix deck, because a party never
+ * stalls on the network. The returned `deck` is the one the hands validate
+ * against: the caller must register it before the draft starts.
+ */
+export async function generateCustomHands(
+  dishName: string,
+  options: GenerateCustomHandsOptions = {},
+): Promise<{ chefOne: Hand; chefTwo: Hand; deck: Deck }> {
+  const clean = dishName.trim();
+  const venice = options.venice;
+  if (clean.length < 2 || clean.length > 80 || !venice) {
+    return { ...(await generateHands(deckById('chaos')!, options)), deck: deckById('chaos')! };
+  }
+  try {
+    const { content } = await venice.chat(
+      [
+        { role: 'system', content: CUSTOM_SYSTEM_PROMPT },
+        { role: 'user', content: customUserPrompt(clean, options.vegetarianOnly ?? false) },
+      ],
+      // Ten invented ingredients need more room than a single twist pick.
+      { maxTokens: 8192 },
+    );
+    const parsed = parseCustomReply(clean, content, options.vegetarianOnly ?? false);
+    if (!parsed) {
+      return { ...(await generateHands(deckById('chaos')!, options)), deck: deckById('chaos')! };
+    }
+    return parsed;
+  } catch {
+    return { ...(await generateHands(deckById('chaos')!, options)), deck: deckById('chaos')! };
+  }
 }

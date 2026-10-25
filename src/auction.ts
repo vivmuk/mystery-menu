@@ -74,7 +74,7 @@ export function renderPlatedDishes(state: PublicDraftState, names: Record<Chef, 
 
 /** All ingredient, purse, plate and bid data comes from this public snapshot. */
 export function mountAuction(root: HTMLElement, state: PublicDraftState, context: AuctionContext): () => void {
-  const screen = el('section', 'auction-screen');
+  const screen = el('section', `auction-screen${context.demo ? ' auction-screen--director' : ''}`);
   const setText = (node: HTMLElement, text: string): void => {
     if (node.textContent !== text) node.textContent = text;
   };
@@ -103,7 +103,7 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
     if (context.newAward && state.lastAward?.chef === chef && state.lastAward.price > 0) coins.classList.add('purse__coins--spent');
     const dots = el('div', 'purse__dots');
     dots.setAttribute('aria-hidden', 'true');
-    for (let i = 0; i < 10; i++) dots.append(el('i', i < state.chefs[chef].coins ? 'coin coin--full' : 'coin'));
+    for (let i = 0; i < 20; i++) dots.append(el('i', i < state.chefs[chef].coins ? 'coin coin--full' : 'coin'));
     panel.append(coins, dots);
     purses.append(panel);
   }
@@ -173,7 +173,7 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
       if (pending || !canAct(snapshot, 'chefTwo', Date.now())) return;
       const coins = snapshot.chefs.chefTwo.coins;
       const next = auction.standingBid + 1;
-      const wantsIt = next <= coins && auction.standingBid < Math.min(3, Math.max(1, coins - 1)) && Math.random() < 0.8;
+      const wantsIt = next <= coins && auction.standingBid < Math.min(8, Math.max(2, coins - 3)) && Math.random() < 0.8;
       if (wantsIt) submit('draft:bid', { code: context.code, chef: 'chefTwo', amount: next });
       else submit('draft:take-it', { code: context.code, chef: 'chefTwo' });
     }, 900 + Math.random() * 700);
@@ -271,7 +271,7 @@ export function mountAuction(root: HTMLElement, state: PublicDraftState, context
       const remaining = remainingMs(state.deadline, now);
       setText(clockValue, `${Math.ceil(remaining / 1000)}s`);
       setText(clockLabel, remaining === 0 ? 'Time’s up · waiting for the referee' : context.demo ? `${context.names[state.auction!.turn]}’s shot clock` : context.chef === state.auction!.turn ? 'Your shot clock' : `${context.names[state.auction!.turn]}’s shot clock`);
-      fill.style.transform = `scaleX(${remaining / 10000})`;
+      fill.style.transform = `scaleX(${remaining / 25000})`;
       clock.classList.toggle('shot-clock--urgent', remaining > 0 && remaining <= 3000);
       for (const item of buttons) item.button.disabled = pending || !context.connected || !canBid(state, item.chef, item.amount, now);
       for (const item of takes) item.button.disabled = pending || !context.connected || !canAct(state, item.chef, now);

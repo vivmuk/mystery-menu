@@ -1,6 +1,6 @@
 import { createDraft, reduce, publicState, DraftError, type DraftAction, type DraftHands, type DraftState, type PublicDraftState } from './draft/engine.ts';
-import { deckById } from './ingredients/deck.ts';
-import { generateHands } from './ingredients/generate.ts';
+import { deckById, registerCustomDeck } from './ingredients/deck.ts';
+import { generateCustomHands, generateHands } from './ingredients/generate.ts';
 import type { RoomRegistry } from './rooms.ts';
 import type { VeniceClient } from './venice/client.ts';
 import { createVote, reduceVote, publicVoteState, VoteError, type VoteState, type VoteSeat, type PublicVoteState } from './votes.ts';
@@ -121,6 +121,26 @@ export class GameSession {
       this.#generating = false;
     }
   }
+
+  /**
+   * Custom-dish generation: the host typed any dish or cuisine. The invented
+   * deck is registered here — before the draft starts — so the engine's own
+   * re-validation can resolve its ingredient ids. A fallback lands on the
+   * Chaos Mix deck, which is already registered by construction.
+   */
+  async generateCustom(dishName: string, vegetarianOnly: boolean, venice?: VeniceClient): Promise<HandsReceipt> {
+    if (this.#disposed || this.#generating || this.#state) throw new DraftError('wrong-phase', 'Hands cannot be replaced during a draft or generation.');
+    this.#generating = true;
+    try {
+      const { chefOne, chefTwo, deck } = await generateCustomHands(dishName, { vegetarianOnly, venice });
+      if (this.#disposed) throw new DraftError('wrong-phase', 'This room is not open.');
+      const registered = deckById(deck.id) ?? registerCustomDeck(deck);
+      this.#hands = { chefOne: { ...chefOne, deckId: registered.id }, chefTwo: { ...chefTwo, deckId: registered.id } };
+      return { ok: true, vegetarianOnly };
+    } finally {
+      this.#generating = false;
+    }
+  }
 }
 
 /** Sessions are keyed by the registry's canonical room code, not wire input. */
@@ -160,5 +180,15 @@ export class GameSessions {
       throw new DraftError('wrong-phase', 'Seat two chefs before generating hands.');
     }
     return this.get(room.code).generate(deckId, vegetarianOnly, venice);
+  }
+
+  /** Custom-dish twin of generate(): same seat checks, invented deck path. */
+  async generateCustom(code: string, dishName: string, vegetarianOnly: boolean, venice?: VeniceClient): Promise<HandsReceipt> {
+    const room = this.rooms.get(code);
+    if (!room) throw new DraftError('wrong-phase', 'This room is not open.');
+    if (room.players.filter((player) => player.role === 'chef').length !== 2) {
+      throw new DraftError('wrong-phase', 'Seat two chefs before generating hands.');
+    }
+    return this.get(room.code).generateCustom(dishName, vegetarianOnly, venice);
   }
 }

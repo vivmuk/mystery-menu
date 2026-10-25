@@ -7,9 +7,9 @@ import { deckById, type Ingredient } from '../ingredients/deck.ts';
 import { parseHands, type Hand } from '../ingredients/generate.ts';
 
 /** The format's fixed starting purse. */
-export const STARTING_COINS = 10;
-/** Every turn lasts ten seconds; the caller records expiry, never this module. */
-export const SHOT_CLOCK_MS = 10000;
+export const STARTING_COINS = 20;
+/** Every turn lasts twenty-five seconds; the caller records expiry, never this module. */
+export const SHOT_CLOCK_MS = 25000;
 /** Ten items always fill two five-item dishes. */
 export const ITEMS_PER_CHEF = 5;
 

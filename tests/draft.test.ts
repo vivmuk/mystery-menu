@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DECKS, deckById, type Random } from '../server/ingredients/deck.ts';
 import { dealHands } from '../server/ingredients/generate.ts';
 import {
-  createDraft, DraftError, publicState, reduce,
+  createDraft, DraftError, publicState, reduce, SHOT_CLOCK_MS, STARTING_COINS,
   type DraftAction, type DraftErrorCode, type DraftState,
 } from '../server/draft/engine.ts';
 
@@ -51,14 +51,14 @@ function seededRandom(seed: number): Random {
 const hands = () => dealHands(deckById('pizza')!, () => 0);
 
 describe('Budget Draft', () => {
-  it('starts with ten secret items, five seats and ten coins per chef', () => {
+  it('starts with ten secret items, five seats and the starting purse per chef', () => {
     const state = createDraft(hands(), 1000);
     const payload = publicState(state);
     expect(payload.phase).toBe('reveal');
     expect(payload.round).toBe(1);
     expect(payload.totalItems).toBe(10);
-    expect(payload.chefs.chefOne).toEqual({ coins: 10, items: [] });
-    expect(payload.chefs.chefTwo).toEqual({ coins: 10, items: [] });
+    expect(payload.chefs.chefOne).toEqual({ coins: STARTING_COINS, items: [] });
+    expect(payload.chefs.chefTwo).toEqual({ coins: STARTING_COINS, items: [] });
     expect(payload.auction).toBeNull();
     expect(payload.deadline).toBeNull();
     expect(payload.exchangeUsed).toBe(false);
@@ -73,14 +73,14 @@ describe('Budget Draft', () => {
     }
   });
 
-  it('reveals only the announced item and declares a ten-second deadline', () => {
+  it('reveals only the announced item and declares a twenty-five-second deadline', () => {
     const state = createDraft(hands(), 1000);
     const next = reduce(state, { type: 'reveal', now: 2000 });
     expect(next.public.phase).toBe('auction');
     expect(next.public.auction?.item.ingredient).toEqual(hands().chefOne.ingredients[0]);
     expect(next.public.auction?.turn).toBe('chefOne');
     expect(next.public.auction?.standingBid).toBe(0);
-    expect(next.public.deadline).toBe(12000);
+    expect(next.public.deadline).toBe(2000 + SHOT_CLOCK_MS);
     expect(state.public.phase).toBe('reveal');
     expect(state.public.auction).toBeNull();
   });
@@ -89,11 +89,11 @@ describe('Budget Draft', () => {
     const original = auction();
     let state = reduce(original, { type: 'bid', chef: 'chefOne', amount: 1, now: 500 });
     expect(state.public.auction).toMatchObject({ turn: 'chefTwo', standingBid: 1, bidder: 'chefOne' });
-    expect(state.public.chefs.chefOne.coins).toBe(10);
-    expect(state.public.deadline).toBe(10500);
+    expect(state.public.chefs.chefOne.coins).toBe(STARTING_COINS);
+    expect(state.public.deadline).toBe(500 + SHOT_CLOCK_MS);
     state = reduce(state, { type: 'bid', chef: 'chefTwo', amount: 3, now: 700 });
     expect(state.public.auction).toMatchObject({ turn: 'chefOne', standingBid: 3, bidder: 'chefTwo' });
-    expect(state.public.deadline).toBe(10700);
+    expect(state.public.deadline).toBe(700 + SHOT_CLOCK_MS);
     expect(original.public.auction?.standingBid).toBe(0);
   });
 
@@ -101,7 +101,7 @@ describe('Budget Draft', () => {
     const bid = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: 3, now: 1 });
     const state = reduce(bid, { type: 'take-it', chef: 'chefTwo', now: 2 });
     expect(state.public.phase).toBe('reveal');
-    expect(state.public.chefs.chefOne.coins).toBe(7);
+    expect(state.public.chefs.chefOne.coins).toBe(STARTING_COINS - 3);
     expect(state.public.chefs.chefOne.items).toEqual([bid.public.auction!.item]);
     expect(state.public.chefs.chefTwo.items).toEqual([]);
     expect(state.public.auction).toBeNull();
@@ -111,7 +111,7 @@ describe('Budget Draft', () => {
   it('a concede before the first bid gives the opponent the item free', () => {
     const state = reduce(auction(), { type: 'take-it', chef: 'chefOne', now: 0 });
     expect(state.public.chefs.chefTwo.items).toHaveLength(1);
-    expect(state.public.chefs.chefTwo.coins).toBe(10);
+    expect(state.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
   });
 
   it('rejects wrong-turn bids and concessions without mutating state', () => {
@@ -126,44 +126,48 @@ describe('Budget Draft', () => {
     }
   });
 
-  it('rejects bids over the remaining purse, not just the initial ten coins', () => {
-    let state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: 7, now: 0 });
+  it('rejects bids over the remaining purse, not just the starting purse', () => {
+    const spent = 7;
+    let state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: spent, now: 0 });
     state = reduce(state, { type: 'take-it', chef: 'chefTwo', now: 0 });
     state = reduce(state, { type: 'reveal', now: 0 });
-    rejected(state, { type: 'bid', chef: 'chefOne', amount: 4, now: 0 }, 'insufficient-coins');
-    rejected(state, { type: 'bid', chef: 'chefOne', amount: 11, now: 0 }, 'insufficient-coins');
+    const remaining = STARTING_COINS - spent;
+    rejected(state, { type: 'bid', chef: 'chefOne', amount: remaining + 1, now: 0 }, 'insufficient-coins');
+    rejected(state, { type: 'bid', chef: 'chefOne', amount: STARTING_COINS, now: 0 }, 'insufficient-coins');
   });
 
   it('records an explicit timeout at the deadline as a concede', () => {
     const state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: 2, now: 50 });
-    rejected(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline: 10050, now: 10049 }, 'too-early');
-    const next = reduce(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline: 10050, now: 10050 });
-    expect(next.public.chefs.chefOne.coins).toBe(8);
+    const deadline = 50 + SHOT_CLOCK_MS;
+    rejected(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline: deadline + 1, now: deadline + 1 }, 'stale-timeout');
+    rejected(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline, now: deadline - 1 }, 'too-early');
+    const next = reduce(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline, now: deadline });
+    expect(next.public.chefs.chefOne.coins).toBe(STARTING_COINS - 2);
     expect(next.public.chefs.chefOne.items).toHaveLength(1);
     expect(next.public.lastAward).toMatchObject({ chef: 'chefOne', price: 2, reason: 'timeout' });
     expect(next.public.phase).toBe('reveal');
   });
 
   it('a timeout without a standing bid awards the other chef at zero', () => {
-    const state = reduce(auction(), { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: 10000, now: 10010 });
-    expect(state.public.chefs.chefTwo.coins).toBe(10);
+    const state = reduce(auction(), { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: SHOT_CLOCK_MS, now: SHOT_CLOCK_MS + 10 });
+    expect(state.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
     expect(state.public.chefs.chefTwo.items).toHaveLength(1);
     expect(state.public.lastAward?.reason).toBe('timeout');
   });
 
   it('rejects expired player actions and stale or wrong-turn timeout notifications', () => {
     const state = auction();
-    rejected(state, { type: 'bid', chef: 'chefOne', amount: 1, now: 10000 }, 'clock-expired');
-    rejected(state, { type: 'take-it', chef: 'chefOne', now: 10001 }, 'clock-expired');
-    rejected(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline: 10000, now: 10000 }, 'wrong-turn');
-    rejected(state, { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: 9999, now: 10000 }, 'stale-timeout');
+    rejected(state, { type: 'bid', chef: 'chefOne', amount: 1, now: SHOT_CLOCK_MS }, 'clock-expired');
+    rejected(state, { type: 'take-it', chef: 'chefOne', now: SHOT_CLOCK_MS + 1 }, 'clock-expired');
+    rejected(state, { type: 'timeout', chef: 'chefTwo', slot: '1:0', deadline: SHOT_CLOCK_MS, now: SHOT_CLOCK_MS }, 'wrong-turn');
+    rejected(state, { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: SHOT_CLOCK_MS - 1, now: SHOT_CLOCK_MS }, 'stale-timeout');
     let next = reduce(state, { type: 'bid', chef: 'chefOne', amount: 1, now: 1 });
     next = reduce(next, { type: 'bid', chef: 'chefTwo', amount: 2, now: 2 });
-    rejected(next, { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: 10000, now: 10000 }, 'stale-timeout');
+    rejected(next, { type: 'timeout', chef: 'chefOne', slot: '1:0', deadline: SHOT_CLOCK_MS, now: SHOT_CLOCK_MS }, 'stale-timeout');
   });
 
   it('auto-concedes when the opposing chef cannot afford a higher bid', () => {
-    const state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: 10, now: 1 });
+    const state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: STARTING_COINS, now: 1 });
     expect(state.public.phase).toBe('reveal');
     expect(state.public.chefs.chefOne.coins).toBe(0);
     expect(state.public.chefs.chefOne.items).toHaveLength(1);
@@ -171,7 +175,7 @@ describe('Budget Draft', () => {
   });
 
   it('a broke chef is forced to take the remaining slots free, one reveal at a time', () => {
-    let state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: 10, now: 1 });
+    let state = reduce(auction(), { type: 'bid', chef: 'chefOne', amount: STARTING_COINS, now: 1 });
     for (let count = 2; count <= 5; count++) {
       state = reduce(state, { type: 'reveal', now: count });
       expect(state.public.chefs.chefOne.items).toHaveLength(count);
@@ -183,7 +187,7 @@ describe('Budget Draft', () => {
     expect(state.public.phase).toBe('plating');
     expect(state.public.chefs.chefOne.items).toHaveLength(5);
     expect(state.public.chefs.chefTwo.items).toHaveLength(5);
-    expect(state.public.chefs.chefTwo.coins).toBe(10);
+    expect(state.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
     expect(state.public.lastAward?.reason).toBe('full');
   });
 
@@ -196,8 +200,8 @@ describe('Budget Draft', () => {
     while (state.public.phase === 'reveal') state = reduce(state, { type: 'reveal', now: 0 });
     expect(state.public.chefs.chefOne.items).toHaveLength(5);
     expect(state.public.chefs.chefTwo.items).toHaveLength(5);
-    expect(state.public.chefs.chefOne.coins).toBe(10);
-    expect(state.public.chefs.chefTwo.coins).toBe(10);
+    expect(state.public.chefs.chefOne.coins).toBe(STARTING_COINS);
+    expect(state.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
     expect(state.public.phase).toBe('plating');
     rejected(state, { type: 'bid', chef: 'chefOne', amount: 1, now: 0 }, 'wrong-phase');
     rejected(state, { type: 'take-it', chef: 'chefOne', now: 0 }, 'wrong-phase');
@@ -210,8 +214,8 @@ describe('Budget Draft', () => {
     const state = reduce(original, { type: 'gift', chef: 'chefOne', slot, now: 0 });
     expect(state.public.chefs.chefOne.items).toHaveLength(0);
     expect(state.public.chefs.chefTwo.items).toHaveLength(2);
-    expect(state.public.chefs.chefOne.coins).toBe(9);
-    expect(state.public.chefs.chefTwo.coins).toBe(10);
+    expect(state.public.chefs.chefOne.coins).toBe(STARTING_COINS - 1);
+    expect(state.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
     expect(state.public.exchangeUsed).toBe(true);
     rejected(state, { type: 'gift', chef: 'chefTwo', slot, now: 0 }, 'exchange-used');
     rejected(state, { type: 'trade', chef: 'chefTwo', give: slot, receive: '1:9', now: 0 }, 'exchange-used');
@@ -246,8 +250,8 @@ describe('Budget Draft', () => {
     expect(accepted.public.chefs.chefOne.items[0]?.slot).toBe(receive);
     expect(accepted.public.chefs.chefTwo.items[0]?.slot).toBe(give);
     expect(accepted.public.pendingTrade).toBeNull();
-    expect(accepted.public.chefs.chefOne.coins).toBe(9);
-    expect(accepted.public.chefs.chefTwo.coins).toBe(10);
+    expect(accepted.public.chefs.chefOne.coins).toBe(STARTING_COINS - 1);
+    expect(accepted.public.chefs.chefTwo.coins).toBe(STARTING_COINS);
     rejected(accepted, { type: 'trade', chef: 'chefTwo', give, receive, now: 0 }, 'exchange-used');
   });
 
@@ -296,8 +300,8 @@ describe('Budget Draft', () => {
       if (index !== 2) {
         state = reduce(state, { type: 'next-round', hands: hands(), now: index + 1 });
         expect(state.public.round).toBe(index + 2);
-        expect(state.public.chefs.chefOne).toEqual({ coins: 10, items: [] });
-        expect(state.public.chefs.chefTwo).toEqual({ coins: 10, items: [] });
+        expect(state.public.chefs.chefOne).toEqual({ coins: STARTING_COINS, items: [] });
+        expect(state.public.chefs.chefTwo).toEqual({ coins: STARTING_COINS, items: [] });
         expect(state.public.exchangeUsed).toBe(false);
         expect(state.public.pendingTrade).toBeNull();
         expect(state.public.lastAward).toBeNull();
@@ -384,7 +388,7 @@ describe('Budget Draft', () => {
   it('a chef who spends the last coins on item three gets exactly the last two slots free', () => {
     let state = auction();
     for (let item = 0; item < 3; item++) {
-      state = reduce(state, { type: 'bid', chef: 'chefOne', amount: item === 2 ? 8 : 1, now: 0 });
+      state = reduce(state, { type: 'bid', chef: 'chefOne', amount: item === 2 ? STARTING_COINS - 2 : 1, now: 0 });
       state = reduce(state, { type: 'take-it', chef: 'chefTwo', now: 0 });
       if (item < 2) state = reduce(state, { type: 'reveal', now: 0 });
     }
@@ -410,7 +414,7 @@ describe('Budget Draft', () => {
     expect(state.private.remaining[0]!.ingredient.name).not.toBe('Mutated');
     const payload = publicState(state);
     payload.chefs.chefOne.coins = 0;
-    expect(state.public.chefs.chefOne.coins).toBe(10);
+    expect(state.public.chefs.chefOne.coins).toBe(STARTING_COINS);
   });
 
   it('walks public JSON after every transition: no unrevealed id or name leaks', () => {
@@ -469,7 +473,7 @@ describe('Budget Draft', () => {
         expect(state).toEqual(next);
         for (const chef of Object.values(state.public.chefs)) {
           expect(chef.coins).toBeGreaterThanOrEqual(0);
-          expect(chef.coins).toBeLessThanOrEqual(10);
+          expect(chef.coins).toBeLessThanOrEqual(STARTING_COINS);
           expect(chef.items.length).toBeLessThanOrEqual(5);
         }
         const items = Object.values(state.public.chefs).flatMap((chef) => chef.items)

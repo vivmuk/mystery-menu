@@ -1,3 +1,4 @@
+import { SHOT_CLOCK_MS, STARTING_COINS } from '../server/draft/engine.ts';
 import { createServer, type Server } from 'node:http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GameSessions } from '../server/game.ts';
@@ -49,22 +50,22 @@ describe('server-owned shot clock', () => {
     game.act({ type: 'reveal' });
     expect(vi.getTimerCount()).toBe(1);
     for (const [chef, amount] of [['chefOne', 1], ['chefTwo', 2], ['chefOne', 3]] as const) {
-      vi.advanceTimersByTime(amount === 1 ? 9000 : 8000);
+      vi.advanceTimersByTime(amount === 1 ? SHOT_CLOCK_MS - 1000 : SHOT_CLOCK_MS - 2000);
       game.act({ type: 'bid', chef, amount });
-      expect(game.publicState()?.deadline).toBe(Date.now() + 10000);
+      expect(game.publicState()?.deadline).toBe(Date.now() + SHOT_CLOCK_MS);
       expect(vi.getTimerCount()).toBe(1);
       vi.advanceTimersByTime(1000); // Each replaced clock would fire here.
       expect(game.publicState()?.phase).toBe('auction');
     }
-    vi.advanceTimersByTime(8999);
+    vi.advanceTimersByTime(SHOT_CLOCK_MS - 1001);
     expect(broadcasts).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1);
+    vi.advanceTimersByTime(1001);
     expect(game.publicState()?.lastAward).toMatchObject({ chef: 'chefOne', price: 3, reason: 'timeout' });
-    expect(game.publicState()?.chefs.chefOne.coins).toBe(7);
+    expect(game.publicState()?.chefs.chefOne.coins).toBe(STARTING_COINS - 3);
     expect(vi.getTimerCount()).toBe(0);
     expect(broadcasts).toHaveBeenCalledOnce();
     game.act({ type: 'reveal' });
-    vi.advanceTimersByTime(10000);
+    vi.advanceTimersByTime(SHOT_CLOCK_MS);
     expect(game.publicState()?.lastAward).toMatchObject({ chef: 'chefTwo', price: 0, reason: 'timeout' });
     expect(broadcasts).toHaveBeenCalledTimes(2);
   });
@@ -76,11 +77,11 @@ describe('server-owned shot clock', () => {
     game.act({ type: 'reveal' });
     vi.setSystemTime(500);
     game.act({ type: 'bid', chef: 'chefOne', amount: 1 });
-    expect(game.publicState()?.deadline).toBe(11000);
-    vi.setSystemTime(11000);
+    expect(game.publicState()?.deadline).toBe(1000 + SHOT_CLOCK_MS);
+    vi.setSystemTime(1000 + SHOT_CLOCK_MS);
     expect(() => game.act({ type: 'bid', chef: 'chefTwo', amount: 2 })).toThrow('Record the timeout');
     expect(vi.getTimerCount()).toBe(1);
-    vi.advanceTimersByTime(10500);
+    vi.advanceTimersByTime(SHOT_CLOCK_MS + 500);
     expect(game.publicState()?.lastAward).toMatchObject({ chef: 'chefOne', price: 1, reason: 'timeout' });
     expect(broadcasts).toHaveBeenCalledOnce();
   });
@@ -120,7 +121,7 @@ describe('server-owned shot clock', () => {
     expect(() => game.start()).toThrow('Prepare hands');
     const detached = game.publicState()!;
     detached.chefs.chefOne.coins = 0;
-    expect(game.publicState()?.chefs.chefOne.coins).toBe(10);
+    expect(game.publicState()?.chefs.chefOne.coins).toBe(STARTING_COINS);
     for (let index = 0; index < 10; index++) {
       game.act({ type: 'reveal' });
       const state = game.publicState()!;
@@ -165,7 +166,7 @@ describe('server-owned shot clock', () => {
     rooms.leaveBySocket('two');
     expect(rooms.get(room.code)).toBeUndefined();
     expect(vi.getTimerCount()).toBe(0);
-    vi.advanceTimersByTime(10000);
+    vi.advanceTimersByTime(SHOT_CLOCK_MS);
     expect(broadcasts).not.toHaveBeenCalled();
     games.dispose();
     const other = await session();

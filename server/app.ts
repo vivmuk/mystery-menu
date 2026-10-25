@@ -80,16 +80,38 @@ export function createApp(
     }
     const body: unknown = req.body;
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId and optional vegetarianOnly boolean.' });
+      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId or a customDish, plus an optional vegetarianOnly boolean.' });
       return;
     }
-    const { deckId, vegetarianOnly = false } = body as { deckId?: unknown; vegetarianOnly?: unknown };
-    if (typeof deckId !== 'string' || typeof vegetarianOnly !== 'boolean') {
-      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId and optional vegetarianOnly boolean.' });
+    const { deckId, customDish, vegetarianOnly = false } = body as { deckId?: unknown; customDish?: unknown; vegetarianOnly?: unknown };
+    if (typeof vegetarianOnly !== 'boolean') {
+      res.status(400).json({ ok: false, code: 'invalid-action', message: 'Supply a deckId or a customDish, plus an optional vegetarianOnly boolean.' });
+      return;
+    }
+    // Two doors: a preset deck id, or a host-typed dish. Exactly one may open.
+    if (typeof deckId === 'string' && deckId.length > 0) {
+      if (customDish !== undefined) {
+        res.status(400).json({ ok: false, code: 'invalid-action', message: 'Offer a deckId or a customDish, not both.' });
+        return;
+      }
+      try {
+        res.json(await games.generate(room.code, deckId, vegetarianOnly, venice));
+      } catch (error) {
+        // Never echo generator errors: their messages can include dealt content.
+        if (error instanceof DraftError) {
+          res.status(error.code === 'invalid-action' ? 400 : 409).json({ ok: false, code: error.code, message: error.message });
+        } else {
+          res.status(503).json({ ok: false, code: 'invalid-hands', message: 'Could not prepare hands. Try again.' });
+        }
+      }
+      return;
+    }
+    if (typeof customDish !== 'string' || customDish.trim().length < 2 || customDish.trim().length > 80) {
+      res.status(400).json({ ok: false, code: 'invalid-action', message: 'A dish or cuisine is 2–80 characters.' });
       return;
     }
     try {
-      res.json(await games.generate(room.code, deckId, vegetarianOnly, venice));
+      res.json(await games.generateCustom(room.code, customDish.trim(), vegetarianOnly, venice));
     } catch (error) {
       // Never echo generator errors: their messages can include dealt content.
       if (error instanceof DraftError) {

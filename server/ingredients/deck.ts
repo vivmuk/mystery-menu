@@ -266,5 +266,71 @@ export const DECKS: Deck[] = DECK_DEFS.map((def) => {
 
 /** Looks up one deck by id, or undefined when the id is unknown. */
 export function deckById(id: string): Deck | undefined {
-  return DECKS.find((deck) => deck.id === id);
+  return DECKS.find((deck) => deck.id === id) ?? CUSTOM_DECKS.get(id);
+}
+
+/**
+ * The registry of host-typed decks. A match's custom deck is stored here so
+ * `deckById` — and therefore the draft engine's own re-validation — can
+ * resolve its ingredient ids. Entries are per-match and in-memory only, like
+ * the rooms themselves; the cap keeps a long-running server from growing the
+ * map forever, evicting the oldest deck first (a room whose deck was evicted
+ * has long since ended its evening).
+ */
+const CUSTOM_DECKS = new Map<string, Deck>();
+let customSequence = 0;
+const CUSTOM_DECK_CAP = 100;
+
+export function registerCustomDeck(deck: Deck): Deck {
+  const id = `custom-${slugId(deck.name)}-${++customSequence}`;
+  const stored: Deck = { ...deck, id };
+  CUSTOM_DECKS.set(id, stored);
+  if (CUSTOM_DECKS.size > CUSTOM_DECK_CAP) {
+    const oldest = CUSTOM_DECKS.keys().next().value;
+    if (oldest !== undefined) CUSTOM_DECKS.delete(oldest);
+  }
+  return stored;
+}
+
+/**
+ * Custom decks: when a host types ANY dish or cuisine instead of picking a
+ * preset, the generator builds a one-off deck from the model's ingredients.
+ * These are deliberately NOT registered in `DECKS` — the catalog's duplicate
+ * check exists for curated presets, and a per-match deck must never leak into
+ * another room's `deckById` lookup.
+ */
+
+/** Kebab-case id for a free-form ingredient name, e.g. `Gochujang` → `gochujang`. */
+export function slugId(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .normalize('NFD')
+    // Strip combining marks so accented names slug cleanly (jalapeño → jalapeno).
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'ingredient';
+}
+
+/**
+ * Builds the one-off deck for a host-typed dish. The caller hands the
+ * ingredients in generation order — every chef's four cores first, the two
+ * cross-cuisine twists last — so the split is positional: everything but the
+ * final two is `corePool` (the first four of each hand come from here), and
+ * the final two are the `twistPool`.
+ */
+export function makeCustomDeck(dishName: string, ingredients: Ingredient[]): Deck {
+  const name = dishName.trim();
+  if (name.length === 0) throw new Error('A custom deck needs a dish name.');
+  if (ingredients.length < 3) {
+    throw new Error('A custom deck needs at least one core ingredient and a twist.');
+  }
+  const split = Math.max(ingredients.length - 2, 1);
+  return {
+    id: 'custom',
+    name,
+    cuisine: name.toLowerCase(),
+    corePool: ingredients.slice(0, split),
+    twistPool: ingredients.slice(split),
+  };
 }

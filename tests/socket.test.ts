@@ -1,3 +1,4 @@
+import { SHOT_CLOCK_MS, STARTING_COINS } from '../server/draft/engine.ts';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { generateHands } from '../server/ingredients/generate.ts';
 import { io as ioClient, type Socket } from 'socket.io-client';
@@ -112,7 +113,7 @@ describe('realtime channel', () => {
       }
     }
     expect(state.phase).toBe('plating');
-    expect(state.chefs.chefOne).toMatchObject({ coins: 5 });
+    expect(state.chefs.chefOne).toMatchObject({ coins: 15 });
     expect(state.chefs.chefOne.items).toHaveLength(5);
     expect(state.chefs.chefTwo.items).toHaveLength(5);
     expect(state.deadline).toBeNull();
@@ -217,18 +218,18 @@ describe('realtime channel', () => {
     await draft(host, 'draft:start', { code });
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     const revealed = await draft(host, 'draft:reveal', { code, now: 0 });
-    expect(revealed.deadline).toBe(Date.now() + 10000);
+    expect(revealed.deadline).toBe(Date.now() + SHOT_CLOCK_MS);
     vi.advanceTimersByTime(2000);
     const bid = await draft(host, 'draft:bid', { code, chef: 'chefOne', amount: 3, now: 0, deadline: 0 });
-    expect(bid.deadline).toBe(Date.now() + 10000);
+    expect(bid.deadline).toBe(Date.now() + SHOT_CLOCK_MS);
     const hostAward = new Promise<PublicDraftState>((resolve) => host.once('draft:state', resolve));
     const guestAward = new Promise<PublicDraftState>((resolve) => guest.once('draft:state', resolve));
-    await vi.advanceTimersByTimeAsync(9999);
+    await vi.advanceTimersByTimeAsync(SHOT_CLOCK_MS - 1);
     await vi.advanceTimersByTimeAsync(1);
     const [state, echo] = await Promise.all([hostAward, guestAward]);
     expect(state).toEqual(echo);
     expect(state.lastAward).toMatchObject({ chef: 'chefOne', price: 3, reason: 'timeout' });
-    expect(state.chefs.chefOne.coins).toBe(7);
+    expect(state.chefs.chefOne.coins).toBe(STARTING_COINS - 3);
     expect(state.deadline).toBeNull();
   });
 

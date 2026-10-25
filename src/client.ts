@@ -422,6 +422,16 @@ function updateHostSetup(): void {
       menu.append(option);
     }
     label.append(menu);
+    // Or write your own menu: the kitchen takes any dish or cuisine by name.
+    const customLabel = el('label', 'setup-label', '…or name your own');
+    const custom = el('input', 'menu-input');
+    custom.id = 'draft-custom';
+    custom.name = 'customDish';
+    custom.type = 'text';
+    custom.autocomplete = 'off';
+    custom.maxLength = 80;
+    custom.placeholder = 'Any dish or cuisine — Thai street food, Ottoman brunch, Neapolitan pizza…';
+    customLabel.append(custom);
     const dietary = el('label', 'dietary-toggle');
     const checkbox = el('input');
     checkbox.type = 'checkbox';
@@ -436,7 +446,7 @@ function updateHostSetup(): void {
     start.type = 'button';
     start.id = 'draft-start';
     start.addEventListener('click', () => void prepareDraft());
-    setup.append(label, dietary, error, start);
+    setup.append(label, customLabel, dietary, error, start);
     app.append(setup);
   }
   const button = setup.querySelector<HTMLButtonElement>('#draft-start');
@@ -448,15 +458,21 @@ async function prepareDraft(): Promise<void> {
   const code = roomCode;
   const deckId = document.querySelector<HTMLSelectElement>('#draft-menu')?.value;
   const vegetarianOnly = document.querySelector<HTMLInputElement>('#draft-vegetarian')?.checked ?? false;
+  // A named dish wins over the preset menu: two characters is enough to mean
+  // something, one is probably a typo.
+  const customDish = document.querySelector<HTMLInputElement>('#draft-custom')?.value.trim() ?? '';
+  const useCustom = customDish.length >= 2;
   preparing = true;
   let startSent = false;
   updateHostSetup();
   setStatus('Preparing secret ingredients…');
   try {
     // The receipt contains no hands. Starting is still host-authorized by socket.
+    // The kitchen takes either a preset deck or a dish named on the spot; the
+    // server rejects a customDish it cannot cook, and that error surfaces here.
     const res = await fetch(`/api/rooms/${encodeURIComponent(code)}/hands`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ deckId, vegetarianOnly }),
+      body: JSON.stringify(useCustom ? { customDish, vegetarianOnly } : { deckId, vegetarianOnly }),
     });
     const receipt = await res.json() as { ok?: boolean; message?: string };
     if (!res.ok || receipt.ok !== true) throw new Error(receipt.message ?? 'Could not prepare the draft. Try again.');

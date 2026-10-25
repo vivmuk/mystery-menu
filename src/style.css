@@ -1,26 +1,26 @@
 :root {
-  /* Neon Kitchen: the game is played in a dark room with the lights off,
-     so the table's screen is the only light source. One warm neon (orange)
-     and one cool neon (blue) do all the work, with cyan for the twist and
-     a loud green for money, exactly like the broadcast overlays the format
-     came from. */
-  --paper: #0a0614;
-  --ink: #f6f2ff;
-  --muted: #b6a6d8;
-  --orange: #ff6a2b;
-  --blue: #35a7ff;
-  --line: rgba(246, 242, 255, 0.16);
+  /* RED KITCHEN: the game is played on a sheet of crimson paper with a white
+   * drafting pen. One bright red accent and one blue do the chef work, green
+   * is for money and the table's yes-votes, and white draws the lines. The
+   * look is line-diagram / blueprint: crisp 2px strokes, corner ticks and
+   * dashed connectors, no heavy fills. */
+  --paper: #9e0b1e;
+  --ink: #ffffff;
+  --muted: #ffd9d2;
+  --orange: #ff3b45;
+  --blue: #2f80ff;
+  --line: rgba(255, 255, 255, 0.18);
   --radius: 18px;
 
-  --pink: #ff2f9c;
-  --cyan: #29f0ff;
-  --green: #46ff9b;
-  --violet: #8b5cff;
-  --panel: rgba(255, 255, 255, 0.055);
-  --panel-solid: #150e26;
-  --glow-orange: 0 0 24px rgba(255, 106, 43, 0.45);
-  --glow-blue: 0 0 24px rgba(53, 167, 255, 0.45);
-  --glow-cyan: 0 0 22px rgba(41, 240, 255, 0.4);
+  --pink: #ff5c64;
+  --cyan: #7db5ff;
+  --green: #35d07f;
+  --violet: #2ecc71;
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-solid: #7d0916;
+  --glow-orange: 0 0 24px rgba(255, 59, 69, 0.5);
+  --glow-blue: 0 0 24px rgba(47, 128, 255, 0.5);
+  --glow-cyan: 0 0 22px rgba(255, 255, 255, 0.4);
   color-scheme: dark;
 }
 
@@ -98,10 +98,10 @@ body {
 }
 
 .card {
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   padding: 16px 18px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .card__num {
@@ -153,7 +153,7 @@ body {
 }
 
 .btn--primary:active {
-  background: #e04a12;
+  background: #d92030;
 }
 
 .btn--secondary {
@@ -162,7 +162,7 @@ body {
 }
 
 .btn--secondary:active {
-  background: #1747cc;
+  background: #1c5fd0;
 }
 
 .join-form {
@@ -211,7 +211,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.12em;
   line-height: 1;
-  color: var(--orange);
+  color: #fff;
 }
 
 .room-code--small {
@@ -253,7 +253,7 @@ body {
 }
 
 .seat-choice .btn--primary {
-  box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.25);
+  box-shadow: 0 0 0 2px rgba(255, 59, 69, 0.35);
 }
 
 .swatch {
@@ -331,73 +331,76 @@ body {
 .auction-heading h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
 .auction-room { font-size: 13px; font-weight: 700; color: var(--muted); }
 .auction-notice { margin: 0; font-size: 15px; font-weight: 750; line-height: 1.4; }
-.draft-error { margin: 0; padding: 12px 14px; border: 2px solid #c43b08; border-radius: 12px; color: #a53005; background: #fff2ed; font-weight: 700; line-height: 1.4; }
+.draft-error { margin: 0; padding: 12px 14px; border: 2px solid #ff8a8f; border-radius: 12px; color: #ffe3e0; background: rgba(64, 6, 13, 0.7); font-weight: 700; line-height: 1.4; }
 .draft-error[hidden] { display: none; }
 
 .purses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.purse { --chef: var(--orange); --chef-text: #b63606; border: 2px solid var(--line); border-top: 5px solid var(--chef); border-radius: 16px; padding: 10px 12px; min-width: 0; }
-.purse--chefTwo { --chef: var(--blue); --chef-text: var(--blue); }
+.purse { --chef: var(--orange); --chef-text: #ff8a8f; border: 2px solid var(--line); border-top: 5px solid var(--chef); border-radius: 16px; padding: 10px 12px; min-width: 0; background: rgba(255, 255, 255, 0.05); }
+.purse--chefTwo { --chef: var(--blue); --chef-text: #8ab6ff; }
 .purse--turn { border-color: var(--chef); }
 .purse__name { margin: 0; font-size: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .purse__coins { margin: 4px 0 8px; color: var(--chef-text); font-size: 32px; font-weight: 850; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .purse__coins span { font-size: 13px; letter-spacing: 0; font-weight: 650; }
-.purse__dots { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
-.coin { display: block; aspect-ratio: 1; border: 1px solid #b9c1ce; border-radius: 50%; }
+.purse__dots { display: flex; flex-wrap: wrap; gap: 3px; }
+.coin { display: block; flex: 0 0 calc(10% - 3px); aspect-ratio: 1; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 50%; }
 .coin--full { background: var(--chef); border-color: var(--chef); }
 
-.ingredient { position: relative; isolation: isolate; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: radial-gradient(ellipse at 0% 100%, #fff0e9, transparent 65%), radial-gradient(ellipse at 100% 0%, #eef3ff, transparent 65%), #fff; padding: 14px 18px 20px; text-align: center; }
+.ingredient { position: relative; isolation: isolate; overflow: hidden; border: 2px solid var(--line); border-radius: 24px; background: radial-gradient(ellipse at 0% 100%, rgba(255, 255, 255, 0.1), transparent 65%), radial-gradient(ellipse at 100% 0%, rgba(47, 128, 255, 0.14), transparent 65%), rgba(255, 255, 255, 0.05); padding: 14px 18px 20px; text-align: center; }
 .ingredient__count { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 750; }
-.ingredient__plate { width: 80px; height: 80px; margin: 0 auto 10px; border: 7px solid #fff; outline: 1px solid #d5ddec; border-radius: 50%; box-shadow: 0 8px 0 #dfe7f6, 0 14px 24px #1f5aff15; display: grid; place-items: center; background: repeating-radial-gradient(circle, #fff 0 31px, #e8eefb 32px 33px, #fff 34px 38px); }
-.ingredient__monogram { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 42% 58% 50% 38%; background: var(--orange); color: var(--ink); font-weight: 900; font-size: 40px; transform: rotate(-9deg); box-shadow: 4px 5px 0 #ff5a1f22; }
+.ingredient__plate { width: 80px; height: 80px; margin: 0 auto 10px; border: 4px solid rgba(255, 255, 255, 0.75); outline: 2px solid rgba(255, 255, 255, 0.35); outline-offset: 3px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2); display: grid; place-items: center; background: repeating-radial-gradient(circle, rgba(255, 255, 255, 0.05) 0 31px, rgba(255, 255, 255, 0.11) 32px 33px, rgba(255, 255, 255, 0.05) 34px 38px); }
+.ingredient__monogram { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 42% 58% 50% 38%; border: 2px solid rgba(255, 255, 255, 0.7); background: var(--orange); color: #fff; font-weight: 900; font-size: 40px; transform: rotate(-9deg); box-shadow: 3px 4px 0 rgba(255, 255, 255, 0.25); }
 .ingredient__name { position: relative; margin: 12px 0 4px; font-size: clamp(30px, 8.7vw, 48px); font-weight: 900; line-height: 1.04; letter-spacing: -.045em; overflow-wrap: anywhere; text-wrap: balance; }
 .ingredient__origin { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
 .ingredient__award { margin: 12px 0 0; font-weight: 750; font-size: 15px; line-height: 1.4; }
-.ingredient--twist { border: 2px solid var(--blue); }
-.ingredient--twist .ingredient__monogram { background: var(--blue); color: #fff; transform: rotate(9deg); box-shadow: -5px 5px 0 #ff5a1f66; }
-.twist-badge { display: inline-block; margin: 8px 0 0; background: var(--blue); color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 800; }
+.ingredient--twist { border: 2px solid var(--green); }
+.ingredient--twist .ingredient__monogram { background: var(--green); color: #06301c; transform: rotate(9deg); box-shadow: -4px 4px 0 rgba(255, 255, 255, 0.3); }
+.twist-badge { display: inline-block; margin: 8px 0 0; background: var(--green); color: #06301c; border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 800; }
 
 .shot-clock { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 8px; }
 .shot-clock__label { margin: 0; font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
 .shot-clock__value { font-size: 24px; font-variant-numeric: tabular-nums; }
-.shot-clock__track { grid-column: 1 / -1; height: 10px; border-radius: 10px; overflow: hidden; background: #e8eefb; }
-.shot-clock__fill { height: 100%; background: var(--blue); transform-origin: left; }
-.shot-clock--urgent .shot-clock__value { color: #b63606; }
-.shot-clock--urgent .shot-clock__fill { background: var(--orange); }
-.bid-controls { display: grid; gap: 10px; position: sticky; bottom: env(safe-area-inset-bottom, 0px); z-index: 2; background: #fff; border-radius: 14px; padding-block: 8px; box-shadow: 0 -6px 16px #14161a0a; }
+.shot-clock__track { grid-column: 1 / -1; height: 14px; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.1); border: 2px solid var(--line); }
+.shot-clock__fill { height: 100%; background: repeating-linear-gradient(45deg, var(--blue) 0 5px, #6ba9ff 5px 10px); transform-origin: left; }
+.shot-clock--urgent .shot-clock__value { color: #ffd9d2; }
+.shot-clock--urgent .shot-clock__fill { background: repeating-linear-gradient(45deg, var(--orange) 0 5px, #ff8087 5px 10px); }
+.bid-controls { display: grid; gap: 10px; position: sticky; bottom: env(safe-area-inset-bottom, 0px); z-index: 2; background: rgba(122, 6, 17, 0.94); border: 2px solid var(--line); border-radius: 14px; padding-block: 8px; box-shadow: 0 -6px 16px rgba(40, 2, 6, 0.4); }
 .standing-bid { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
 .standing-bid strong { font-size: 24px; letter-spacing: -.04em; }
 .bid-owner { margin: -5px 0 0; font-size: 12px; color: var(--muted); }
 .bid-raises { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .auction-screen .btn { margin-top: 0; width: 100%; }
-.bid-raise { display: flex; flex-direction: column; gap: 2px; min-height: 60px; padding: 8px; background: #edf2ff; color: #1747cc; font-size: 24px; border: 1px solid #c9d7ff; }
+.bid-raise { display: flex; flex-direction: column; gap: 2px; min-height: 60px; padding: 8px; background: rgba(47, 128, 255, 0.14); color: #bcd8ff; font-size: 24px; border: 2px solid rgba(47, 128, 255, 0.65); border-radius: 10px; }
 .bid-raise span { font-size: 12px; font-weight: 650; }
 .bid-next { min-height: 52px; }
-.take-it { background: var(--orange); color: var(--ink); min-height: 60px; flex-direction: column; gap: 1px; font-size: 24px; }
+.take-it { background: transparent; border: 2px solid rgba(255, 255, 255, 0.5); color: var(--ink); min-height: 60px; flex-direction: column; gap: 1px; font-size: 24px; border-radius: 10px; }
 .take-it span { font-size: 12px; font-weight: 650; }
 .host-reveal { color: var(--ink); min-height: 52px; }
-.btn { touch-action: manipulation; -webkit-tap-highlight-color: #1f5aff22; }
-@media (hover: hover) { .btn:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--ink); } }
-.btn:disabled { background: #f1f3f6; color: #656d7a; border-color: #e2e6ec; cursor: not-allowed; }
+.btn { touch-action: manipulation; -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2); }
+@media (hover: hover) { .btn:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--ink), 0 0 16px rgba(255, 255, 255, 0.35); } }
+.btn:disabled { background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.45); border-color: var(--line); cursor: not-allowed; }
 .btn:focus-visible, select:focus-visible, .dietary-toggle input:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
 .dishes > h3 { margin: 0 0 10px; font-size: 17px; }
 .dish-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.dish { --chef: var(--orange); min-width: 0; border: 1px solid var(--line); border-bottom: 4px solid var(--chef); border-radius: 16px; padding: 12px; }
+.dish { --chef: var(--orange); min-width: 0; border: 2px solid var(--line); border-bottom: 4px solid var(--chef); border-radius: 16px; padding: 12px; background: rgba(255, 255, 255, 0.05); }
 .dish--chefTwo { --chef: var(--blue); }
 .dish h4 { margin: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dish__count { margin: 4px 0 8px; color: var(--muted); font-size: 12px; }
 .dish__slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 8px; }
-.dish__slot { aspect-ratio: 1; border: 1px dashed #b9c1ce; border-radius: 50%; display: grid; place-items: center; font-size: 11px; }
+.dish__slot { aspect-ratio: 1; border: 1px dashed rgba(255, 255, 255, 0.45); border-radius: 50%; display: grid; place-items: center; font-size: 11px; }
 .dish__slot--filled { background: var(--chef); color: #fff; border: 0; }
 .dish__items { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.dish__items li { font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; padding: 6px 0 0; border-top: 1px solid var(--line); }
+.dish__items li { font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; padding: 6px 0 0; border-top: 1px dashed var(--line); }
 .dish__empty { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
 .setup-label { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 14px; font-weight: 700; }
-.menu-select { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid #b9c1ce; border-radius: 12px; background: #fff; font: inherit; font-size: 16px; color: var(--ink); }
+.menu-select { width: 100%; min-height: 48px; padding: 8px 12px; border: 2px solid var(--line); border-radius: 12px; background: rgba(122, 6, 17, 0.6); font: inherit; font-size: 16px; color: var(--ink); }
+.menu-input { width: 100%; min-height: 48px; padding: 8px 12px; border: 2px solid var(--line); border-radius: 12px; background: rgba(122, 6, 17, 0.6); font: inherit; font-size: 16px; color: var(--ink); }
+.menu-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.menu-input:focus { outline: 3px solid var(--blue); outline-offset: 2px; }
 .dietary-toggle { display: flex; align-items: center; gap: 8px; min-height: 48px; font-size: 14px; }
 .dietary-toggle input { width: 44px; height: 44px; margin: 0; accent-color: var(--blue); }
 .draft-setup .btn { width: 100%; color: var(--ink); }
-.draft-setup .draft-error { color: #a53005; }
+.draft-setup .draft-error { color: #ffe3e0; }
 
 /* Anonymous vote: retain the existing white/orange/blue kitchen tokens. */
 .vote-screen { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -433,7 +436,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shot-clock__fill { transform: none !important; background: #b9c9f2; }
+  .shot-clock__fill { transform: none !important; background: rgba(255, 255, 255, 0.4); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -463,32 +466,66 @@ body {
 /* NEON KITCHEN                                                         */
 /* ==================================================================== */
 
-/* The room. Two neon washes in opposite corners and a faint grid, so the
- * page reads as a lit surface in a dark room rather than a black page. */
+/* The room. A deep crimson sheet with brighter red glows in opposite corners
+ * and a faint white drafting grid, so the page reads as a blueprint drawn on
+ * red paper rather than a flat colour. */
 body {
   background:
-    radial-gradient(680px 420px at 6% -8%, rgba(255, 47, 156, 0.30), transparent 62%),
-    radial-gradient(620px 420px at 100% 4%, rgba(41, 240, 255, 0.22), transparent 60%),
-    radial-gradient(700px 520px at 50% 118%, rgba(139, 92, 255, 0.26), transparent 62%),
-    repeating-linear-gradient(0deg, rgba(246, 242, 255, 0.035) 0 1px, transparent 1px 44px),
-    repeating-linear-gradient(90deg, rgba(246, 242, 255, 0.035) 0 1px, transparent 1px 44px),
+    radial-gradient(680px 420px at 6% -8%, rgba(255, 59, 69, 0.35), transparent 62%),
+    radial-gradient(620px 420px at 100% 4%, rgba(255, 122, 69, 0.25), transparent 60%),
+    radial-gradient(700px 520px at 50% 118%, rgba(47, 128, 255, 0.24), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 44px),
     var(--paper);
   background-attachment: fixed;
 }
 
-/* Cards are glass panels on that surface. */
+/* Cards are translucent panels on that surface, drawn as line diagrams:
+ * crisp 2px strokes with corner tick marks, like a schematic on red paper. */
 .card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 rgba(246, 242, 255, 0.10), 0 18px 44px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px);
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 18px 44px rgba(0, 0, 0, 0.35);
 }
 
-.card__num { color: var(--cyan); }
+.card::before,
+.card::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.card::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: var(--radius) 0 0 0;
+}
+
+.card::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 var(--radius) 0;
+}
+
+@media (hover: hover) {
+  .card:hover { border-color: rgba(255, 255, 255, 0.55); box-shadow: 0 0 22px -6px rgba(255, 255, 255, 0.5); }
+}
+
+.card__num { color: var(--green); }
 .card h2 { color: var(--ink); }
 .card p { color: var(--muted); }
 
 .brand__dot {
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: var(--orange);
   box-shadow: var(--glow-orange);
 }
 
@@ -512,133 +549,139 @@ body {
   font-weight: 800;
 }
 
-/* Buttons light up. */
+/* Buttons are outlined shapes; only the primary gets a solid fill. */
 .btn {
-  background: rgba(246, 242, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
+  border-radius: 12px;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
 
 .btn--primary {
-  background: linear-gradient(180deg, #ff8a4d, var(--orange));
-  color: #210c02;
-  border-color: rgba(255, 138, 77, 0.7);
+  background: var(--orange);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.75);
   box-shadow: var(--glow-orange);
 }
 
-.btn--primary:active { background: linear-gradient(180deg, var(--orange), #d84f14); }
+.btn--primary:active { background: #d92030; }
 
 .btn--secondary {
-  background: linear-gradient(180deg, #6cc4ff, var(--blue));
-  color: #04121f;
-  border-color: rgba(108, 196, 255, 0.7);
+  background: var(--blue);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
   box-shadow: var(--glow-blue);
 }
 
-.btn--secondary:active { background: linear-gradient(180deg, var(--blue), #1c7cd6); }
+.btn--secondary:active { background: #1c5fd0; }
 
 .btn:disabled {
-  background: rgba(246, 242, 255, 0.05);
-  color: rgba(246, 242, 255, 0.42);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.42);
   border-color: var(--line);
   box-shadow: none;
   cursor: not-allowed;
 }
 
 @media (hover: hover) {
-  .btn:not(:disabled):hover { box-shadow: 0 0 30px rgba(246, 242, 255, 0.28); }
-  .btn--primary:not(:disabled):hover { box-shadow: 0 0 34px rgba(255, 106, 43, 0.65); }
-  .btn--secondary:not(:disabled):hover { box-shadow: 0 0 34px rgba(53, 167, 255, 0.65); }
+  .btn:not(:disabled):hover { box-shadow: 0 0 26px rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.8); }
+  .btn--primary:not(:disabled):hover { box-shadow: 0 0 30px rgba(255, 59, 69, 0.7); }
+  .btn--secondary:not(:disabled):hover { box-shadow: 0 0 30px rgba(47, 128, 255, 0.7); }
 }
 
 .btn:focus-visible,
 select:focus-visible,
 .code-input:focus,
 .name-input:focus,
+.menu-input:focus,
 .dietary-toggle input:focus-visible {
-  outline: 3px solid var(--cyan);
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
 
 .code-input,
 .name-input,
-.menu-select {
-  background: rgba(10, 6, 20, 0.6);
-  border: 1px solid var(--line);
+.menu-select,
+.menu-input {
+  background: rgba(74, 4, 11, 0.55);
+  border: 2px solid var(--line);
   color: var(--ink);
 }
 
 .code-input::placeholder,
-.name-input::placeholder { color: rgba(246, 242, 255, 0.42); }
+.name-input::placeholder,
+.menu-input::placeholder { color: rgba(255, 255, 255, 0.5); }
 
-/* The room code is the neon sign in the window. */
+/* The room code is the headline on the sheet: white ink, red pen shadow. */
 .room-code {
   color: #fff;
-  text-shadow: 0 0 8px rgba(255, 106, 43, 0.9), 0 0 30px rgba(255, 106, 43, 0.65), 0 0 70px rgba(255, 106, 43, 0.4);
+  text-shadow: 0 0 8px rgba(255, 59, 69, 0.9), 0 0 30px rgba(255, 59, 69, 0.6), 3px 3px 0 rgba(64, 4, 10, 0.8);
 }
 
 .room-code--small {
   color: #fff;
-  text-shadow: 0 0 8px rgba(41, 240, 255, 0.9), 0 0 26px rgba(53, 167, 255, 0.6);
+  text-shadow: 0 0 8px rgba(47, 128, 255, 0.9), 0 0 26px rgba(47, 128, 255, 0.55);
 }
 
 /* A QR code must stay dark-on-light to scan, so that one card keeps its
- * own white plate even in a dark room. */
+ * own white plate even on the red sheet. */
 .card--qr { background: #ffffff; border-color: #ffffff; }
-.card--qr .card h2, .card--qr h2 { color: #14161a; }
-.card--qr p { color: #4a4f5c; }
+.card--qr h2 { color: #5d0912; }
+.card--qr p { color: #7a2b30; }
+.card--qr::before, .card--qr::after { border-color: rgba(158, 11, 30, 0.55); }
 
-/* Money. Loud, green, like the tags on the broadcast overlay. */
+/* Money. Loud, green, like the tags on a market board. */
 .purse {
-  background: var(--panel);
+  background: rgba(255, 255, 255, 0.06);
   border: 2px solid var(--line);
   border-top: 5px solid var(--chef);
-  box-shadow: inset 0 1px 0 rgba(246, 242, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.3);
 }
 
 .purse--turn {
   border-color: var(--chef);
-  box-shadow: 0 0 26px -4px var(--chef), inset 0 1px 0 rgba(246, 242, 255, 0.1);
+  box-shadow: 0 0 26px -4px var(--chef), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .purse__name { color: var(--ink); font-weight: 800; }
 
 .purse__coins {
   color: var(--green);
-  text-shadow: 0 0 14px rgba(70, 255, 155, 0.55);
+  text-shadow: 0 0 14px rgba(53, 208, 127, 0.55);
   font-weight: 900;
 }
 
-.purse--chefTwo .purse__coins { color: #9fd0ff; text-shadow: 0 0 14px rgba(53, 167, 255, 0.6); }
+.purse--chefTwo .purse__coins { color: #9cc6ff; text-shadow: 0 0 14px rgba(47, 128, 255, 0.6); }
 
 .purse__coins span { color: var(--muted); }
 
-.coin { border: 1px solid rgba(246, 242, 255, 0.28); }
-.coin--full { background: var(--chef); border-color: var(--chef); box-shadow: 0 0 10px -1px var(--chef); }
+.coin { border: 1px solid rgba(255, 255, 255, 0.38); }
+.coin--full { background: var(--chef); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 10px -1px var(--chef); }
 
-/* The reveal: a plate under a spotlight, and the ingredient laid on it. */
+/* The reveal: a plate drawn in double outline, the ingredient laid on it. */
 .ingredient {
   background:
-    radial-gradient(ellipse at 0% 100%, rgba(255, 106, 43, 0.22), transparent 62%),
-    radial-gradient(ellipse at 100% 0%, rgba(53, 167, 255, 0.22), transparent 62%),
-    var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 rgba(246, 242, 255, 0.1), 0 22px 60px rgba(0, 0, 0, 0.5);
+    radial-gradient(ellipse at 0% 100%, rgba(255, 59, 69, 0.28), transparent 62%),
+    radial-gradient(ellipse at 100% 0%, rgba(47, 128, 255, 0.22), transparent 62%),
+    rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 22px 60px rgba(0, 0, 0, 0.4);
 }
 
 .ingredient__plate {
-  border: 7px solid rgba(246, 242, 255, 0.14);
-  outline: 1px solid rgba(41, 240, 255, 0.4);
-  background: radial-gradient(circle at 50% 40%, rgba(246, 242, 255, 0.16), rgba(10, 6, 20, 0.2) 70%);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(41, 240, 255, 0.16);
+  border: 4px solid rgba(255, 255, 255, 0.7);
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 3px;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.14), rgba(94, 6, 14, 0.35) 70%);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35), inset 0 0 30px rgba(255, 255, 255, 0.14);
 }
 
 .ingredient__monogram {
-  background: linear-gradient(180deg, #ff9a63, var(--orange));
-  color: #210c02;
-  box-shadow: 0 0 26px rgba(255, 106, 43, 0.55);
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 0 26px rgba(255, 59, 69, 0.55);
 }
 
 /* The Muse art sits inside the plate when we have it. */
@@ -652,91 +695,91 @@ select:focus-visible,
 
 .ingredient__name {
   color: #fff;
-  text-shadow: 0 0 18px rgba(246, 242, 255, 0.28);
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.28);
 }
 
 .ingredient__origin { color: var(--muted); }
 .ingredient__award { color: var(--ink); }
 
-/* The twist is the moment the table leans in. */
+/* The twist is the moment the table leans in: green ink on the red sheet. */
 .ingredient--twist {
-  border: 2px solid var(--cyan);
-  box-shadow: 0 0 40px -8px rgba(41, 240, 255, 0.75), inset 0 1px 0 rgba(246, 242, 255, 0.1);
+  border: 2px solid var(--green);
+  box-shadow: 0 0 40px -8px rgba(53, 208, 127, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ingredient--twist .ingredient__monogram {
-  background: linear-gradient(180deg, #8ff6ff, var(--cyan));
-  color: #04252b;
-  box-shadow: 0 0 26px rgba(41, 240, 255, 0.65);
+  background: var(--green);
+  color: #06301c;
+  box-shadow: 0 0 26px rgba(53, 208, 127, 0.65);
 }
 
 .twist-badge {
-  background: var(--cyan);
-  color: #04252b;
+  background: var(--green);
+  color: #06301c;
   border-radius: 999px;
   padding: 7px 12px;
   font-size: 12px;
-  box-shadow: var(--glow-cyan);
+  box-shadow: 0 0 22px rgba(53, 208, 127, 0.55);
 }
 
-/* The ten-second clock is the heartbeat of the whole game. */
+/* The clock is the heartbeat of the whole game: hatched drain in a rail. */
 .shot-clock__label { color: var(--ink); }
 .shot-clock__value { color: #fff; font-weight: 900; }
-.shot-clock__track { background: rgba(246, 242, 255, 0.14); }
+.shot-clock__track { background: rgba(255, 255, 255, 0.14); }
 .shot-clock__fill {
-  background: linear-gradient(90deg, var(--cyan), var(--blue));
-  box-shadow: 0 0 18px rgba(41, 240, 255, 0.65);
+  background: repeating-linear-gradient(45deg, var(--blue) 0 5px, #6ba9ff 5px 10px);
+  box-shadow: 0 0 18px rgba(47, 128, 255, 0.65);
 }
 
-.shot-clock--urgent .shot-clock__value { color: var(--pink); text-shadow: 0 0 16px rgba(255, 47, 156, 0.7); }
-.shot-clock--urgent .shot-clock__fill { background: linear-gradient(90deg, var(--pink), #ff7a3d); box-shadow: 0 0 20px rgba(255, 47, 156, 0.7); }
+.shot-clock--urgent .shot-clock__value { color: #ffd9d2; text-shadow: 0 0 16px rgba(255, 59, 69, 0.8); }
+.shot-clock--urgent .shot-clock__fill { background: repeating-linear-gradient(45deg, var(--orange) 0 5px, #ff8087 5px 10px); box-shadow: 0 0 20px rgba(255, 59, 69, 0.7); }
 
-/* The bid bar sits on the dark, not on white. */
+/* The bid bar sits on a deep red panel, outlined like the rest of the sheet. */
 .bid-controls {
-  background: linear-gradient(180deg, rgba(10, 6, 20, 0.55), rgba(10, 6, 20, 0.96));
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
-  border-radius: 18px;
+  background: rgba(74, 4, 11, 0.96);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 14px;
 }
 
 .standing-bid { color: var(--muted); }
-.standing-bid strong { color: #fff; text-shadow: 0 0 18px rgba(246, 242, 255, 0.3); }
+.standing-bid strong { color: #fff; text-shadow: 0 0 18px rgba(255, 255, 255, 0.3); }
 .bid-owner { color: var(--muted); }
 
 .bid-raise {
-  background: rgba(53, 167, 255, 0.12);
-  color: #bfe4ff;
-  border: 1px solid rgba(53, 167, 255, 0.45);
+  background: rgba(47, 128, 255, 0.12);
+  color: #bcd8ff;
+  border: 2px solid rgba(47, 128, 255, 0.6);
+  border-radius: 10px;
   font-weight: 900;
 }
 
 .bid-raise span { color: var(--muted); }
 
 @media (hover: hover) {
-  .bid-raise:hover { background: rgba(53, 167, 255, 0.22); box-shadow: var(--glow-blue); }
+  .bid-raise:hover { background: rgba(47, 128, 255, 0.24); box-shadow: var(--glow-blue); }
 }
 
 .take-it {
-  background: linear-gradient(180deg, #ff8a4d, var(--orange));
-  color: #210c02;
-  border-color: rgba(255, 138, 77, 0.7);
-  font-weight: 900;
-  box-shadow: var(--glow-orange);
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
 }
 
-.take-it span { color: #4a1c05; }
+.take-it span { color: var(--muted); }
 .host-reveal { color: var(--ink); }
 
 /* The two plates, side by side. */
 .dish {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--line);
   border-bottom: 4px solid var(--chef);
-  box-shadow: inset 0 1px 0 rgba(246, 242, 255, 0.08), 0 14px 34px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 34px rgba(0, 0, 0, 0.3);
 }
 
 .dish h4 { color: var(--ink); }
 .dish__count { color: var(--muted); }
-.dish__slot { border: 1px dashed rgba(246, 242, 255, 0.3); color: var(--muted); }
+.dish__slot { border: 1px dashed rgba(255, 255, 255, 0.4); color: var(--muted); }
 .dish__slot--filled {
   background: var(--chef);
   color: transparent;
@@ -758,7 +801,7 @@ select:focus-visible,
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cyan);
-  text-shadow: 0 0 18px rgba(41, 240, 255, 0.5);
+  text-shadow: 0 0 18px rgba(125, 181, 255, 0.5);
 }
 .stage-plates__grid { display: grid; gap: 16px; }
 
@@ -779,10 +822,11 @@ select:focus-visible,
   aspect-ratio: 1;
   margin: 0 auto;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, #2a3050, #10121e 72%);
-  border: 9px solid rgba(255, 255, 255, 0.14);
-  outline: 2px solid rgba(41, 240, 255, 0.34);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.62), inset 0 0 44px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at 50% 40%, #b01226, #6e0713 72%);
+  border: 6px solid rgba(255, 255, 255, 0.6);
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 4px;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.5), inset 0 0 44px rgba(0, 0, 0, 0.35);
 }
 
 .stage-plate__item {
@@ -810,19 +854,20 @@ select:focus-visible,
   transform: translate(-50%, -50%);
   padding: 5px 10px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ff8a4d, var(--orange));
-  color: #210c02;
+  background: var(--orange);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 0 24px -4px rgba(255, 106, 43, 0.95);
+  box-shadow: 0 0 24px -4px rgba(255, 59, 69, 0.95);
 }
 
 .stage-plate__empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--muted); font-size: 13px; }
 /* A caption under the plate: inside the well it collided with the ring. */
-.stage-plate__count { margin: 10px 0 0; font-size: 12px; font-weight: 800; color: #e6dcff; }
+.stage-plate__count { margin: 10px 0 0; font-size: 12px; font-weight: 800; color: #ffe3e0; }
 
 .stage-plate__list {
   margin: 14px 0 0;
@@ -841,33 +886,33 @@ select:focus-visible,
 .dietary-toggle { color: var(--ink); }
 .draft-setup .btn { color: var(--ink); }
 
-/* Errors should look like a warning light, not a form validation. */
+/* Errors should look like a red flag on the sheet, not a form validation. */
 .draft-error {
   border: 2px solid var(--pink);
-  background: rgba(255, 47, 156, 0.14);
-  color: #ffd7ea;
-  box-shadow: 0 0 24px -6px rgba(255, 47, 156, 0.7);
+  background: rgba(255, 92, 100, 0.16);
+  color: #ffe3e0;
+  box-shadow: 0 0 24px -6px rgba(255, 92, 100, 0.7);
 }
 
 /* The vote: two plates under lights, one anonymous ballot each. */
 .vote-dish {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 rgba(246, 242, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
 .vote-dish h3 { color: #fff; }
 .vote-dish .dish__items li { color: var(--ink); }
 .vote-notice { color: var(--ink); }
 .vote-privacy { color: var(--muted); }
-.vote-count { color: var(--green); text-shadow: 0 0 16px rgba(70, 255, 155, 0.5); }
+.vote-count { color: var(--green); text-shadow: 0 0 16px rgba(53, 208, 127, 0.5); }
 
 .vote-button { font-weight: 800; }
 
 .vegetarian-badge {
-  border: 1px solid rgba(70, 255, 155, 0.6);
+  border: 1px solid rgba(53, 208, 127, 0.6);
   color: var(--green);
-  background: rgba(70, 255, 155, 0.1);
+  background: rgba(53, 208, 127, 0.1);
   border-radius: 999px;
 }
 
@@ -875,13 +920,13 @@ select:focus-visible,
 
 .vote-result {
   border-block: 3px solid var(--cyan);
-  box-shadow: 0 0 40px -10px rgba(41, 240, 255, 0.8);
+  box-shadow: 0 0 40px -10px rgba(125, 181, 255, 0.7);
   padding: 20px 0;
 }
 
 .vote-result h2 {
   color: #fff;
-  text-shadow: 0 0 10px rgba(41, 240, 255, 0.8), 0 0 40px rgba(41, 240, 255, 0.5);
+  text-shadow: 0 0 10px rgba(125, 181, 255, 0.7), 0 0 40px rgba(125, 181, 255, 0.45);
 }
 
 .vote-result p { color: var(--muted); }
@@ -890,8 +935,8 @@ select:focus-visible,
 .foot__status { color: var(--muted); }
 .player-list__row { color: var(--ink); }
 .player-list__role { color: var(--cyan); }
-.swatch { border: 3px solid transparent; box-shadow: 0 0 0 1px rgba(246, 242, 255, 0.3); }
-.swatch--picked { border-color: #fff; box-shadow: 0 0 18px rgba(246, 242, 255, 0.6); }
+.swatch { border: 3px solid transparent; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35); }
+.swatch--picked { border-color: #fff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.55); }
 
 select option { background: var(--panel-solid); color: var(--ink); }
 
@@ -900,10 +945,10 @@ select option { background: var(--panel-solid); color: var(--ink); }
    * an urgent clock: motion that points at what matters, never decoration
    * that scrolls. */
   .vote-dish { transition: border-color 200ms ease, box-shadow 200ms ease; }
-  .vote-dish:hover { border-color: rgba(41, 240, 255, 0.5); box-shadow: 0 0 34px -8px rgba(41, 240, 255, 0.6); }
+  .vote-dish:hover { border-color: rgba(255, 255, 255, 0.55); box-shadow: 0 0 34px -8px rgba(255, 255, 255, 0.45); }
   .purse--turn { animation: purse-breathe 2.4s ease-in-out infinite; }
   @keyframes purse-breathe {
-    50% { box-shadow: 0 0 34px -4px var(--chef), inset 0 1px 0 rgba(246, 242, 255, 0.1); }
+    50% { box-shadow: 0 0 34px -4px var(--chef), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
   }
 }
 
@@ -922,18 +967,18 @@ select option { background: var(--panel-solid); color: var(--ink); }
 .purse--chefTwo .purse__coins { color: var(--blue); }
 
 /* The shot clock is the only thing on the auction screen with a deadline, so
- * it should be the loudest: big numeral, thick visible rail, bright drain. */
+ * it should be the loudest: big numeral, thick outlined rail, hatched drain. */
 .shot-clock { align-items: end; }
 .shot-clock__label { font-size: 14px; font-weight: 800; letter-spacing: 0.04em; }
 .shot-clock__value { font-size: 40px; font-weight: 900; line-height: 1; letter-spacing: -0.03em; }
 .shot-clock__track {
   height: 16px;
   border-radius: 999px;
-  background: rgba(246, 242, 255, 0.16);
-  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(246, 242, 255, 0.14);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.4);
 }
-.shot-clock__fill { box-shadow: 0 0 24px rgba(41, 240, 255, 0.8); }
+.shot-clock__fill { box-shadow: 0 0 24px rgba(47, 128, 255, 0.75); }
 
 /* Bid amounts are the numbers you read under a five second clock: the total
  * leads, the increment is the aside, and the button is lit so it cannot be
@@ -941,10 +986,10 @@ select option { background: var(--panel-solid); color: var(--ink); }
 .bid-raise {
   min-height: 64px;
   font-size: 25px;
-  border: 1px solid rgba(53, 167, 255, 0.55);
-  background: linear-gradient(180deg, rgba(53, 167, 255, 0.22), rgba(53, 167, 255, 0.08));
+  border: 2px solid rgba(125, 181, 255, 0.7);
+  background: linear-gradient(180deg, rgba(47, 128, 255, 0.26), rgba(47, 128, 255, 0.1));
   color: #ffffff;
-  text-shadow: 0 0 16px rgba(53, 167, 255, 0.7);
+  text-shadow: 0 0 16px rgba(47, 128, 255, 0.7);
 }
 
 .bid-raise span {
@@ -956,50 +1001,50 @@ select option { background: var(--panel-solid); color: var(--ink); }
 }
 
 .bid-raise:disabled {
-  background: rgba(246, 242, 255, 0.04);
-  color: rgba(246, 242, 255, 0.34);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.34);
   border-color: var(--line);
   text-shadow: none;
 }
 
 /* "Take it" hands the ingredient to the other chef, so it must not wear that
- * chef's orange. It is a concede: pink, outlined, plainly not the bid. */
+ * chef's red. It is a concede: plain outlined white, plainly not the bid. */
 .take-it {
-  background: rgba(255, 47, 156, 0.14);
-  color: #ffd7ea;
-  border: 1px solid rgba(255, 47, 156, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffe3e0;
+  border: 2px solid rgba(255, 255, 255, 0.5);
   box-shadow: none;
 }
 
-.take-it span { color: #ff9cc9; }
+.take-it span { color: var(--muted); }
 
 /* Cook or judge is a choice, not a dead button and a live one. */
 .btn--seat {
-  background: rgba(246, 242, 255, 0.06);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--line);
   color: var(--ink);
   box-shadow: none;
 }
 
 .btn--seat.btn--primary {
-  background: linear-gradient(180deg, #ff8a4d, var(--orange));
-  border-color: rgba(255, 138, 77, 0.7);
-  color: #210c02;
+  background: var(--orange);
+  border-color: rgba(255, 255, 255, 0.75);
+  color: #fff;
   box-shadow: var(--glow-orange);
 }
 
-.btn--seat.btn--primary span { color: #4a1c05; }
+.btn--seat.btn--primary span { color: #ffd9d2; }
 
 /* A placeholder should look like a hint, not like a filled-in code. */
 .code-input::placeholder,
 .name-input::placeholder {
-  color: rgba(246, 242, 255, 0.55);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .code-input:focus,
 .name-input:focus {
-  background: rgba(10, 6, 20, 0.85);
-  border-color: rgba(41, 240, 255, 0.6);
+  background: rgba(74, 4, 11, 0.85);
+  border-color: rgba(125, 181, 255, 0.7);
 }
 
 /* Winning an ingredient is the payoff beat of a round, so it gets a banner. */
@@ -1010,26 +1055,26 @@ select option { background: var(--panel-solid); color: var(--ink); }
   font-size: 17px;
   font-weight: 900;
   color: #fff;
-  background: linear-gradient(180deg, rgba(255, 106, 43, 0.3), rgba(255, 106, 43, 0.12));
-  border: 1px solid rgba(255, 138, 77, 0.55);
+  background: linear-gradient(180deg, rgba(255, 59, 69, 0.34), rgba(255, 59, 69, 0.14));
+  border: 2px solid rgba(255, 255, 255, 0.55);
   box-shadow: var(--glow-orange);
 }
 
 /* Small caps were below the legibility floor for a phone passed around a dim
  * table. Brighter, and a touch bigger. */
 .card__num { font-size: 0.78rem; }
-.ingredient__count { font-size: 13.5px; color: #d5c9f2; }
+.ingredient__count { font-size: 13.5px; color: #ffd9d2; }
 .auction-room { color: var(--cyan); font-size: 13px; }
-.foot__status { color: #cbbce8; font-size: 13.5px; }
+.foot__status { color: #ffd9d2; font-size: 13.5px; }
 .player-list__role { font-size: 12.5px; }
 .twist-badge, .vegetarian-badge, .dietary-badge { font-size: 12.5px; }
 
 /* The QR must stay dark-on-light to scan, but it can stop blowing out the
- * room: a white plate with a neon ring around it. */
+ * room: a white plate with a red ring around it. */
 .card--qr {
   background: #ffffff;
   border-color: #ffffff;
-  box-shadow: 0 0 0 1px rgba(41, 240, 255, 0.4), 0 0 46px -8px rgba(41, 240, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45), 0 0 46px -8px rgba(255, 59, 69, 0.7);
 }
 
 /* The plates list scrolls under the sticky bid bar; reserve its height so the
@@ -1056,10 +1101,11 @@ select option { background: var(--panel-solid); color: var(--ink); }
  * Its top corners are square: with rounded corners the content scrolling
  * underneath peeks through the notches, which reads as a broken panel edge. */
 .bid-controls {
-  background: rgba(10, 6, 20, 0.97);
+  background: rgba(74, 4, 11, 0.97);
   backdrop-filter: blur(14px);
-  border-top: 1px solid var(--line);
-  border-radius: 0;
+  border: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  border-radius: 14px;
 }
 
 /* -5px pulled this line into the row above it. */
@@ -1067,53 +1113,54 @@ select option { background: var(--panel-solid); color: var(--ink); }
 
 /* The three raises are the real controls of this game: make them lit. */
 .bid-raise {
-  background: linear-gradient(180deg, rgba(53, 167, 255, 0.62), rgba(53, 167, 255, 0.3));
-  border: 1px solid rgba(150, 215, 255, 0.9);
-  box-shadow: 0 0 26px -6px rgba(53, 167, 255, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(47, 128, 255, 0.62), rgba(47, 128, 255, 0.3));
+  border: 2px solid rgba(150, 195, 255, 0.9);
+  box-shadow: 0 0 26px -6px rgba(47, 128, 255, 1), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 20, 40, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 20, 60, 0.6);
 }
 
-.bid-raise span { color: #eaf7ff; }
+.bid-raise span { color: #eaf3ff; }
 
 /* The status line that explains why you cannot act was the faintest text on
  * the screen. */
-.bid-owner { color: #e6dcff; font-weight: 700; }
-.standing-bid { color: #e6dcff; }
+.bid-owner { color: #ffe3e0; font-weight: 700; }
+.standing-bid { color: #ffe3e0; }
 
 @media (hover: hover) {
   .bid-raise:not(:disabled):hover {
-    background: linear-gradient(180deg, rgba(53, 167, 255, 0.6), rgba(53, 167, 255, 0.3));
-    box-shadow: 0 0 30px -6px rgba(53, 167, 255, 1);
+    background: linear-gradient(180deg, rgba(47, 128, 255, 0.6), rgba(47, 128, 255, 0.3));
+    box-shadow: 0 0 30px -6px rgba(47, 128, 255, 1);
   }
 }
 
 /* "Bid 2 · next legal bid" says the same thing as the +1 button, so it steps
  * back to an outline: the three raises lead, this one is the shortcut. */
 .bid-next {
-  background: rgba(53, 167, 255, 0.1);
-  border: 1px solid rgba(53, 167, 255, 0.6);
+  background: rgba(47, 128, 255, 0.1);
+  border: 2px solid rgba(47, 128, 255, 0.6);
   color: #dff1ff;
   box-shadow: none;
   font-weight: 800;
 }
 
-/* The clock's rail was a whisper on a dark ground. */
+/* The clock's rail was a whisper on the red ground. */
 .shot-clock__label { color: #ffffff; }
 .shot-clock__track {
-  background: rgba(246, 242, 255, 0.22);
-  border: 1px solid rgba(246, 242, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.45);
 }
 
-/* The plate is a plate: a dark rim with the ingredient's own rendering inside
- * it, and the letter only when there is no rendering to show. */
+/* The plate is a plate: a deep red rim with the ingredient's own rendering
+ * inside it, and the letter only when there is no rendering to show. */
 .ingredient__plate {
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 42%, #232842, #141827);
-  border: 8px solid rgba(255, 255, 255, 0.16);
-  outline: 2px solid rgba(41, 240, 255, 0.35);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 50% 42%, #c3142b, #7d0916);
+  border: 6px solid rgba(255, 255, 255, 0.6);
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 4px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), inset 0 0 24px rgba(0, 0, 0, 0.35);
 }
 
 .ingredient__art {
@@ -1158,31 +1205,31 @@ select option { background: var(--panel-solid); color: var(--ink); }
 .card--demo {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(41, 240, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.65);
   background:
-    radial-gradient(420px 220px at 100% 0%, rgba(41, 240, 255, 0.26), transparent 65%),
-    radial-gradient(380px 220px at 0% 100%, rgba(255, 47, 156, 0.24), transparent 65%),
-    var(--panel-solid);
-  box-shadow: 0 0 0 1px rgba(41, 240, 255, 0.18), 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 48px -14px rgba(41, 240, 255, 0.8);
+    radial-gradient(420px 220px at 100% 0%, rgba(47, 128, 255, 0.3), transparent 65%),
+    radial-gradient(380px 220px at 0% 100%, rgba(53, 208, 127, 0.24), transparent 65%),
+    rgba(74, 4, 11, 0.7);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 48px -14px rgba(255, 59, 69, 0.8);
 }
 .card--demo::after {
   content: '';
   position: absolute;
   inset: -40% -20%;
-  background: conic-gradient(from 0deg, transparent 0 72%, rgba(41, 240, 255, 0.16) 82%, transparent 92%);
+  background: conic-gradient(from 0deg, transparent 0 72%, rgba(255, 255, 255, 0.14) 82%, transparent 92%);
   animation: demo-sweep 7s linear infinite;
   pointer-events: none;
 }
 @keyframes demo-sweep { to { transform: rotate(1turn); } }
-.card--demo .card__num { color: var(--cyan); }
+.card--demo .card__num { color: var(--green); }
 .card--demo h2 { font-size: 1.4rem; }
 .btn--demo {
   width: 100%;
   margin-top: 14px;
-  background: linear-gradient(120deg, var(--cyan), var(--green));
-  color: #04211d;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 30px -6px rgba(41, 240, 255, 0.9);
+  background: var(--green);
+  color: #06301c;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 30px -6px rgba(53, 208, 127, 0.9);
   font-weight: 900;
 }
 .btn--demo:active { transform: translateY(1px) scale(0.995); }
@@ -1192,21 +1239,22 @@ select option { background: var(--panel-solid); color: var(--ink); }
   gap: 8px;
   padding: 14px 16px;
   border-radius: 16px;
-  border: 1px dashed rgba(41, 240, 255, 0.6);
-  background: linear-gradient(180deg, rgba(41, 240, 255, 0.12), rgba(41, 240, 255, 0.03));
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
 }
 .demo-banner__tag {
   justify-self: start;
   padding: 4px 9px;
   border-radius: 999px;
-  background: var(--cyan);
-  color: #04211d;
+  background: var(--green);
+  color: #06301c;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   font: 800 11px/1 var(--font-display);
   letter-spacing: 0.16em;
 }
-.demo-banner p { margin: 0; font-size: 13.5px; line-height: 1.45; color: #d9f8ff; }
-.card--code-quiet .room-code { font-size: 1.5rem; letter-spacing: 0.2em; text-shadow: 0 0 14px rgba(41, 240, 255, 0.6); }
-.card--code-quiet { background: rgba(41, 240, 255, 0.05); border-color: rgba(41, 240, 255, 0.32); }
+.demo-banner p { margin: 0; font-size: 13.5px; line-height: 1.45; color: #ffe3e0; }
+.card--code-quiet .room-code { font-size: 1.5rem; letter-spacing: 0.2em; text-shadow: 0 0 14px rgba(255, 255, 255, 0.55); }
+.card--code-quiet { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.4); }
 
 .player-list__row--virtual { border-style: dashed; }
 .player-list__row--virtual .player-list__role { color: var(--cyan); }
@@ -1223,10 +1271,10 @@ select option { background: var(--panel-solid); color: var(--ink); }
   width: 240px;
   height: 240px;
   transform: translateX(-50%);
-  background: conic-gradient(from 0deg, transparent 0 55%, rgba(41, 240, 255, 0.5), transparent 78%);
+  background: conic-gradient(from 0deg, transparent 0 55%, rgba(255, 255, 255, 0.5), transparent 78%);
   border-radius: 50%;
   filter: blur(22px);
-  opacity: 0.5;
+  opacity: 0.45;
   animation: demo-sweep 9s linear infinite;
 }
 .ingredient__plate {
@@ -1247,16 +1295,16 @@ select option { background: var(--panel-solid); color: var(--ink); }
 
 /* The director controls: two chef panels, always visible, one clock. */
 .director { display: grid; gap: 10px; }
-.director__hint { margin: 0; font-size: 13px; line-height: 1.4; color: #cbbce8; }
+.director__hint { margin: 0; font-size: 13px; line-height: 1.4; color: #ffd9d2; }
 .director-chef {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 12px;
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-left: 4px solid var(--chef, var(--orange));
   border-radius: 14px;
-  background: rgba(246, 242, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
   opacity: 0.62;
   transition: opacity 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -1264,7 +1312,7 @@ select option { background: var(--panel-solid); color: var(--ink); }
 .director-chef.is-turn {
   opacity: 1;
   transform: translateY(-1px);
-  background: linear-gradient(180deg, rgba(246, 242, 255, 0.09), rgba(246, 242, 255, 0.03));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
   box-shadow: 0 0 0 1px var(--chef), 0 0 30px -10px var(--chef);
 }
 .director-chef__name { margin: 0; font-size: 15px; color: var(--chef); letter-spacing: -0.01em; }
@@ -1280,9 +1328,9 @@ select option { background: var(--panel-solid); color: var(--ink); }
   min-height: 44px;
   font-size: 13.5px;
   font-weight: 700;
-  color: #d9f8ff;
+  color: #ffe3e0;
 }
-.auto-toggle input { width: 22px; height: 22px; accent-color: var(--cyan); }
+.auto-toggle input { width: 22px; height: 22px; accent-color: var(--green); }
 
 /* The ballot panel: one row per diner, two choices, no hidden arithmetic. */
 .director-ballot {
@@ -1290,11 +1338,11 @@ select option { background: var(--panel-solid); color: var(--ink); }
   gap: 12px;
   padding: 14px;
   border-radius: 18px;
-  border: 1px solid rgba(41, 240, 255, 0.42);
-  background: linear-gradient(180deg, rgba(41, 240, 255, 0.09), rgba(41, 240, 255, 0.02));
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
 }
 .director-ballot h3 { margin: 0; font: 900 18px/1.2 var(--font-display); }
-.director-ballot__hint { margin: 0; font-size: 12.5px; line-height: 1.4; color: #c9edf7; }
+.director-ballot__hint { margin: 0; font-size: 12.5px; line-height: 1.4; color: #ffd9d2; }
 .director-ballot__rows { display: grid; gap: 8px; }
 .director-ballot__row {
   display: grid;
@@ -1304,15 +1352,15 @@ select option { background: var(--panel-solid); color: var(--ink); }
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(10, 6, 20, 0.45);
+  background: rgba(74, 4, 11, 0.45);
 }
-.director-ballot__row.is-voted { border-color: rgba(70, 255, 155, 0.55); }
+.director-ballot__row.is-voted { border-color: rgba(53, 208, 127, 0.6); }
 .director-ballot__dot { width: 10px; height: 10px; border-radius: 50%; }
 .director-ballot__name { font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
 .director-ballot__state { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .director-ballot__row.is-voted .director-ballot__state { color: var(--green); }
 .director-ballot__actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.director-ballot__pick { min-height: 44px; margin: 0; font-size: 13px; background: rgba(246, 242, 255, 0.07); border: 1px solid var(--line); box-shadow: none; }
+.director-ballot__pick { min-height: 44px; margin: 0; font-size: 13px; background: rgba(255, 255, 255, 0.07); border: 2px solid var(--line); box-shadow: none; }
 .director-ballot__row.is-voted .director-ballot__pick { min-height: 0; display: none; }
 .director-ballot__fill { min-height: 46px; margin: 0; font-size: 14px; }
 @media (min-width: 460px) {
@@ -1325,12 +1373,12 @@ select option { background: var(--panel-solid); color: var(--ink); }
   position: relative;
   overflow: hidden;
   padding: 22px 18px;
-  border: 1px solid rgba(41, 240, 255, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 18px;
   background:
-    radial-gradient(420px 180px at 50% 0%, rgba(41, 240, 255, 0.24), transparent 70%),
-    var(--panel-solid);
-  box-shadow: 0 0 48px -14px rgba(41, 240, 255, 0.8);
+    radial-gradient(420px 180px at 50% 0%, rgba(47, 128, 255, 0.24), transparent 70%),
+    rgba(74, 4, 11, 0.7);
+  box-shadow: 0 0 48px -14px rgba(255, 59, 69, 0.7);
   animation: result-land 520ms cubic-bezier(0.2, 1.3, 0.35, 1) both;
 }
 .vote-result::before,
@@ -1345,8 +1393,8 @@ select option { background: var(--panel-solid); color: var(--ink); }
   background: var(--cyan);
   box-shadow:
     32px 6px 0 var(--pink), 74px -2px 0 var(--green), 118px 10px 0 var(--orange),
-    162px -4px 0 var(--violet), 206px 8px 0 var(--cyan), 250px -6px 0 var(--pink),
-    294px 4px 0 var(--green), 338px -2px 0 var(--orange), 382px 6px 0 var(--violet);
+    162px -4px 0 #ffffff, 206px 8px 0 var(--cyan), 250px -6px 0 var(--pink),
+    294px 4px 0 var(--green), 338px -2px 0 var(--orange), 382px 6px 0 #ffffff;
   animation: confetti-fall 2.4s linear infinite;
   opacity: 0.85;
 }
@@ -1356,7 +1404,7 @@ select option { background: var(--panel-solid); color: var(--ink); }
   animation-duration: 3.1s;
   box-shadow:
     24px 2px 0 var(--green), 60px -4px 0 var(--cyan), 104px 8px 0 var(--pink),
-    148px -2px 0 var(--violet), 192px 4px 0 var(--orange), 236px -6px 0 var(--green),
+    148px -2px 0 #ffffff, 192px 4px 0 var(--orange), 236px -6px 0 var(--green),
     280px 6px 0 var(--cyan), 324px -2px 0 var(--pink);
 }
 @keyframes confetti-fall {
@@ -1373,13 +1421,13 @@ select option { background: var(--panel-solid); color: var(--ink); }
  * choice between two pictures and not two bullet lists. */
 .vote-dish {
   background:
-    radial-gradient(360px 180px at 0% 0%, rgba(255, 106, 43, 0.16), transparent 60%),
-    var(--panel);
+    radial-gradient(360px 180px at 0% 0%, rgba(255, 59, 69, 0.2), transparent 60%),
+    rgba(255, 255, 255, 0.06);
 }
 .vote-dish.dish--chefTwo {
   background:
-    radial-gradient(360px 180px at 0% 0%, rgba(53, 167, 255, 0.18), transparent 60%),
-    var(--panel);
+    radial-gradient(360px 180px at 0% 0%, rgba(47, 128, 255, 0.22), transparent 60%),
+    rgba(255, 255, 255, 0.06);
 }
 .vote-dish .dish__items li {
   display: flex;
@@ -1402,4 +1450,215 @@ select option { background: var(--panel-solid); color: var(--ink); }
   .vote-result::before,
   .vote-result::after,
   .purse--turn { animation: none !important; }
+}
+
+/* ==================================================================== */
+/* FIFTH PASS: RED KITCHEN line diagrams                                 */
+/* ==================================================================== */
+
+/* A dashed drafting rule drops from the header into the content, like the
+ * centre line on a schematic drawing. Pure CSS, no extra elements. */
+.auction-heading {
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.auction-heading::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.dishes > h3,
+.stage-plates h3,
+.director-ballot h3 {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.dishes > h3::after,
+.stage-plates h3::after,
+.director-ballot h3::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 72px;
+  bottom: 0;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+/* The ingredient hero gets corner ticks on all four corners: a blueprint
+ * frame around the star of the auction. (The turning halo keeps ::before.) */
+.ingredient {
+  --tick: rgba(255, 255, 255, 0.6);
+}
+
+.ingredient__count::before {
+  content: '┌';
+  margin-right: 6px;
+  color: var(--tick);
+}
+
+.ingredient__origin::after {
+  content: ' ┘';
+  margin-left: 6px;
+  color: var(--tick);
+}
+
+/* ------------------------------------------------------------------ */
+/* SOLO DIRECTOR CONSOLE                                               */
+/* ------------------------------------------------------------------ */
+
+/* When one phone runs the whole room, the screen says so loudly: the
+ * auction becomes a referee's console with two big colour-coded control
+ * decks, so a solo player can never mistake it for a two-phone seat. */
+.auction-screen--director .ingredient::before {
+  opacity: 0.7;
+  top: 26px;
+}
+
+.auction-screen--director .ingredient__count,
+.auction-screen--director .auction-notice {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* 'REFEREE CONSOLE' treatment for the ingredient label. */
+.auction-screen--director .ingredient__count {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.auction-screen--director .ingredient__count::after {
+  content: ' · REFEREE CONSOLE';
+  color: var(--green);
+}
+
+/* The two control decks sit side by side above the hero. */
+.auction-screen--director .director {
+  position: relative;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 18px;
+}
+
+/* The dashed 'control line' motif: a dashed rule linking the reveal button
+ * up to the two chef decks, drawn from the director grid's top edge. */
+.auction-screen--director .director::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 10%;
+  right: 10%;
+  border-top: 2px dashed rgba(255, 255, 255, 0.45);
+}
+
+.auction-screen--director .director::after {
+  content: 'CONTROL LINE';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1px 8px;
+  background: var(--paper);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  font: 800 9px/1.4 var(--font-display);
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Each deck: a big header tab in the chef's colour, coin gauge, chunky
+ * outlined buttons. */
+.auction-screen--director .director-chef {
+  position: relative;
+  padding: 22px 12px 12px;
+  border: 2px solid var(--chef, var(--orange));
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0.55;
+  overflow: hidden;
+}
+
+.auction-screen--director .director-chef.is-turn {
+  opacity: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 0 0 2px var(--chef), 0 0 34px -8px var(--chef);
+}
+
+/* The big header tab. */
+.auction-screen--director .director-chef__name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 12px;
+  background: var(--chef, var(--orange));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auction-screen--director .director-chef--chefTwo .director-chef__name {
+  color: #fff;
+}
+
+/* The coin count as a line-art gauge: outlined bar, hatched fill in the
+ * chef's colour, filled in proportion to coins held. */
+.auction-screen--director .director-chef__coins {
+  position: relative;
+  margin: 6px 0 2px;
+  padding: 6px 8px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 13px;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px 8px);
+}
+
+/* Chunky outlined bid buttons. */
+.auction-screen--director .director-chef__actions .btn {
+  min-height: 54px;
+  font-size: 19px;
+  font-weight: 900;
+  border-radius: 10px;
+}
+
+.auction-screen--director .director-chef__actions .bid-raise {
+  border-width: 2px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  text-shadow: none;
+}
+
+.auction-screen--director .director-chef--chefOne .director-chef__actions .bid-raise {
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.auction-screen--director .director-chef--chefTwo .director-chef__actions .bid-raise {
+  border-color: rgba(125, 181, 255, 0.9);
+}
+
+@media (hover: hover) {
+  .auction-screen--director .director-chef__actions .bid-raise:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 24px -6px rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media (max-width: 380px) {
+  /* Very narrow phones: stack the decks rather than crush them. */
+  .auction-screen--director .director { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-screen--director .director-chef,
+  .auction-screen--director .director-chef.is-turn { transition: none; }
 }
